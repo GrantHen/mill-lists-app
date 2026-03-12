@@ -600,6 +600,14 @@ async function loadDashboard() {
 }
 
 // ─── Search ──────────────────────────────────────────────
+function toggleMillResults(id) {
+  const body = document.getElementById('mill-body-' + id);
+  const arrow = document.getElementById('mill-arrow-' + id);
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  arrow.style.transform = isOpen ? 'rotate(-90deg)' : 'rotate(0deg)';
+}
+
 async function doSearch() {
   const q = document.getElementById('search-input').value.trim();
   if (!q) return;
@@ -622,14 +630,47 @@ async function doSearch() {
     byMill[mill].push(r);
   });
 
-  let html = `<div class="result-header"><h3>${data.total} results across ${Object.keys(byMill).length} mills</h3></div>`;
+  const millNames = Object.keys(byMill);
+  let html = `<div class="result-header" style="margin-bottom:12px;">
+    <h3 style="margin:0;">${data.total} results across ${millNames.length} mill${millNames.length !== 1 ? 's' : ''}</h3>
+    <div style="margin-top:6px;font-size:13px;color:var(--text-dim);">
+      <a href="#" onclick="event.preventDefault();document.querySelectorAll('[id^=mill-body-]').forEach(el=>{el.style.display='block'});document.querySelectorAll('[id^=mill-arrow-]').forEach(el=>{el.style.transform='rotate(0deg)'})">Expand all</a>
+      &nbsp;·&nbsp;
+      <a href="#" onclick="event.preventDefault();document.querySelectorAll('[id^=mill-body-]').forEach(el=>{el.style.display='none'});document.querySelectorAll('[id^=mill-arrow-]').forEach(el=>{el.style.transform='rotate(-90deg)'})">Collapse all</a>
+    </div>
+  </div>`;
 
-  for (const [mill, products] of Object.entries(byMill)) {
-    html += `<div class="card mb-16">
-      <h3 style="font-size:15px;margin-bottom:12px;" class="text-bright">${esc(mill)} <span class="badge badge-blue">${products.length}</span></h3>
-      <div class="data-table-wrap"><table class="data-table"><thead><tr>
-        <th>Species</th><th>Thickness</th><th>Grade</th><th>Qty</th><th>Color</th><th>Length</th><th>Match</th>
-      </tr></thead><tbody>`;
+  millNames.forEach((mill, idx) => {
+    const products = byMill[mill];
+    const id = idx;
+    // Best match type across products for summary badge
+    const hasExact = products.some(p => p.match_type === 'exact');
+    const hasPartial = products.some(p => p.match_type === 'partial');
+    const summaryClass = hasExact ? 'badge-green' : hasPartial ? 'badge-amber' : 'badge-blue';
+    const summaryLabel = hasExact ? 'exact match' : hasPartial ? 'partial match' : 'related';
+
+    // Quick species summary for preview
+    const speciesSet = [...new Set(products.map(p => p.species).filter(Boolean))].slice(0, 4);
+    const speciesPreview = speciesSet.join(', ') + (speciesSet.length < [...new Set(products.map(p=>p.species).filter(Boolean))].length ? '…' : '');
+
+    html += `<div class="card mb-16" style="padding:0;overflow:hidden;">
+      <div onclick="toggleMillResults(${id})" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+          <svg id="mill-arrow-${id}" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--text-dim);transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
+          <div style="min-width:0;">
+            <span class="text-bright" style="font-size:15px;font-weight:600;">${esc(mill)}</span>
+            ${speciesPreview ? `<span style="margin-left:10px;font-size:12px;color:var(--text-dim);">${esc(speciesPreview)}</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span class="badge ${summaryClass}">${summaryLabel}</span>
+          <span class="badge badge-blue">${products.length} item${products.length !== 1 ? 's' : ''}</span>
+        </div>
+      </div>
+      <div id="mill-body-${id}" style="display:none;border-top:1px solid var(--border);">
+        <div class="data-table-wrap"><table class="data-table"><thead><tr>
+          <th>Species</th><th>Thickness</th><th>Grade</th><th>Qty</th><th>Color</th><th>Length</th><th>Match</th>
+        </tr></thead><tbody>`;
 
     products.forEach(p => {
       const matchClass = p.match_type === 'exact' ? 'badge-green' : p.match_type === 'partial' ? 'badge-amber' : 'badge-blue';
@@ -643,8 +684,8 @@ async function doSearch() {
         <td><span class="badge ${matchClass}">${p.match_type}</span></td>
       </tr>`;
     });
-    html += '</tbody></table></div></div>';
-  }
+    html += '</tbody></table></div></div></div>';
+  });
 
   div.innerHTML = html;
 }
