@@ -1,0 +1,30 @@
+services:
+  mill-lists:
+    build: .
+    container_name: mill-lists
+    restart: unless-stopped
+
+    ports:
+      - "8888:8888"   # Change left side to 80 if you want http://YOUR_IP with no port
+
+    volumes:
+      # Persist the database and uploads outside the container so they survive
+      # rebuilds and updates. These folders live on the VPS host machine.
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+
+    environment:
+      # ── Required ────────────────────────────────────────────────────────
+      # Generate a strong secret: python3 -c "import secrets; print(secrets.token_hex(32))"
+      # Without this, every server restart logs everyone out.
+      - SESSION_SECRET=${SESSION_SECRET}
+
+      # ── Optional ────────────────────────────────────────────────────────
+      # Comma-separated emails that get auto-promoted to admin on signup.
+      - ADMIN_EMAILS=${ADMIN_EMAILS:-}
+
+      # OpenAI key for AI-assisted parsing (can also be set in app Settings).
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+
+      # Port (default 8888, must match the ports mapping above).
+      - PORT=8888
