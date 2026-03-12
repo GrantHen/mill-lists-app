@@ -271,20 +271,15 @@ def init_db():
         )
     """)
 
-    # ── Indexes ───────────────────────────────────────────────────────────
+    # ── Indexes (non-group ones safe to create on any schema) ─────────────
     c.execute("CREATE INDEX IF NOT EXISTS idx_products_mill ON products(mill_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_products_upload ON products(upload_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_products_species ON products(species)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_products_thickness ON products(thickness)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_products_grade ON products(grade)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_products_group ON products(group_id)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_uploads_status ON uploads(status)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_uploads_group ON uploads(group_id)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_mills_group ON mills(group_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_activity_user ON activity_log(user_id)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_activity_group ON activity_log(group_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_activity_action ON activity_log(action)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_activity_created ON activity_log(created_at)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_memberships_user ON group_memberships(user_id)")
@@ -292,14 +287,27 @@ def init_db():
     c.execute("CREATE INDEX IF NOT EXISTS idx_invitations_group ON group_invitations(group_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_invitations_email ON group_invitations(email)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_invitations_status ON group_invitations(status)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_search_group ON search_history(group_id)")
 
     conn.commit()
     conn.close()
-    print(f"Database initialized at {DB_PATH}")
 
-    # Run any pending migrations
+    # Run migrations BEFORE creating group_id indexes — migrate_db adds group_id
+    # columns to existing (pre-groups) tables; indexes on those columns must
+    # be created afterwards so they don't fail on legacy databases.
     migrate_db()
+
+    # Reopen and create the group_id indexes (columns guaranteed to exist now)
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("CREATE INDEX IF NOT EXISTS idx_products_group ON products(group_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_uploads_group ON uploads(group_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_mills_group ON mills(group_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_activity_group ON activity_log(group_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_search_group ON search_history(group_id)")
+    conn.commit()
+    conn.close()
+
+    print(f"Database initialized at {DB_PATH}")
 
 
 def migrate_db():
