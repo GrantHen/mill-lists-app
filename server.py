@@ -447,7 +447,10 @@ class GroupsListHandler(BaseHandler):
         if result.get("error"):
             self.write_json(result, 400)
         else:
-            self.write_json(result, 201)
+            # Set active group cookie to the new group
+            self.set_cookie(self.ACTIVE_GROUP_COOKIE, str(result["id"]),
+                            path="/", samesite="Lax", secure=False)
+            self.write_json({"group": result}, 201)
 
 
 class GroupDetailHandler(BaseHandler):
@@ -484,7 +487,7 @@ class GroupDetailHandler(BaseHandler):
             return
 
         # Check ownership
-        is_owner = group['owner_id'] == user_id
+        is_owner = group['created_by'] == user_id
         if not is_owner and not is_admin:
             self.write_json({"error": "Only owner can update group."}, 403)
             return
@@ -495,7 +498,7 @@ class GroupDetailHandler(BaseHandler):
             self.write_json({"error": "Invalid request body."}, 400)
             return
 
-        result = update_group(group_id, data)
+        result = update_group(group_id, data, user_id)
         if result.get("error"):
             self.write_json(result, 400)
         else:
@@ -514,12 +517,12 @@ class GroupDetailHandler(BaseHandler):
             return
 
         # Check ownership
-        is_owner = group['owner_id'] == user_id
+        is_owner = group['created_by'] == user_id
         if not is_owner and not is_admin:
             self.write_json({"error": "Only owner can delete group."}, 403)
             return
 
-        result = delete_group(group_id)
+        result = delete_group(group_id, user_id)
         if result.get("error"):
             self.write_json(result, 400)
         else:
@@ -826,6 +829,23 @@ class AdminAnalyticsHandler(BaseHandler):
     def get(self):
         analytics = get_admin_analytics()
         self.write_json(analytics)
+
+
+class AdminActivityHandler(BaseHandler):
+    @require_admin
+    def get(self):
+        """Get activity log (admin only)."""
+        conn = get_db()
+        rows = conn.execute("""
+            SELECT a.id, a.user_id, a.action, a.details, a.created_at,
+                   u.email, u.display_name
+            FROM activity_log a
+            LEFT JOIN users u ON u.id = a.user_id
+            ORDER BY a.created_at DESC
+            LIMIT 500
+        """).fetchall()
+        conn.close()
+        self.write_json({"activity": dicts_from_rows(rows)})
 
 
 class AdminGroupsHandler(BaseHandler):
@@ -1627,6 +1647,7 @@ def make_app():
         (r"/api/admin/users", AdminUsersHandler),
         (r"/api/admin/users/(\d+)", AdminUserHandler),
         (r"/api/admin/analytics", AdminAnalyticsHandler),
+        (r"/api/admin/activity", AdminActivityHandler),
         (r"/api/admin/groups", AdminGroupsHandler),
 
         # ── Core API (group-scoped) ──────────────────────────────────────

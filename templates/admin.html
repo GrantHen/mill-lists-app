@@ -1041,26 +1041,27 @@
                 });
                 const data = response.json ? await response.json() : JSON.parse(response);
 
-                // Update stats
-                document.getElementById('stat-total-users').textContent = data.stats?.totalUsers || 0;
-                document.getElementById('stat-active-users').textContent = data.stats?.activeUsers || 0;
-                document.getElementById('stat-admins').textContent = data.stats?.adminCount || 0;
-                document.getElementById('stat-suspended').textContent = data.stats?.suspendedCount || 0;
-                document.getElementById('stat-sessions').textContent = data.stats?.activeSessions || 0;
-                document.getElementById('stat-uploads').textContent = data.stats?.totalUploads || 0;
-                document.getElementById('stat-products').textContent = data.stats?.totalProducts || 0;
-                document.getElementById('stat-searches').textContent = data.stats?.totalSearches || 0;
+                // Update stats (backend uses snake_case at top level)
+                document.getElementById('stat-total-users').textContent = data.total_users || 0;
+                document.getElementById('stat-active-users').textContent = data.active_users || 0;
+                document.getElementById('stat-admins').textContent = data.admin_users || 0;
+                document.getElementById('stat-suspended').textContent = data.suspended_users || 0;
+                document.getElementById('stat-sessions').textContent = data.active_sessions || 0;
+                document.getElementById('stat-uploads').textContent = data.total_uploads || 0;
+                document.getElementById('stat-products').textContent = data.total_products || 0;
+                document.getElementById('stat-searches').textContent = data.total_searches || 0;
 
                 // Update registration chart
-                if (data.registrationChart && data.registrationChart.length > 0) {
-                    const maxValue = Math.max(...data.registrationChart.map(d => d.count));
+                const regData = data.registrations_by_day || [];
+                if (regData.length > 0) {
+                    const maxValue = Math.max(...regData.map(d => d.count));
                     let html = '';
-                    data.registrationChart.forEach(day => {
+                    regData.forEach(day => {
                         const percentage = maxValue > 0 ? (day.count / maxValue) * 100 : 0;
                         html += `
                             <div class="chart-bar-group">
                                 <div class="chart-bar" style="height: ${percentage}%;"></div>
-                                <div class="chart-label">${day.date}</div>
+                                <div class="chart-label">${day.day}</div>
                             </div>
                         `;
                     });
@@ -1068,16 +1069,17 @@
                 }
 
                 // Update top users
-                if (data.topUsers && data.topUsers.length > 0) {
+                const topUsers = data.top_users || [];
+                if (topUsers.length > 0) {
                     let html = '';
-                    data.topUsers.forEach(user => {
-                        const lastLogin = user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never';
+                    topUsers.forEach(user => {
+                        const lastLogin = user.last_login_at ? new Date(user.last_login_at).toLocaleString() : 'Never';
                         html += `
                             <tr>
                                 <td>${escapeHtml(user.email)}</td>
                                 <td><span class="badge ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">${user.role}</span></td>
-                                <td>${user.uploadCount || 0}</td>
-                                <td>${user.searchCount || 0}</td>
+                                <td>${user.uploads || 0}</td>
+                                <td>${user.searches || 0}</td>
                                 <td>${lastLogin}</td>
                                 <td>
                                     <button class="btn btn-secondary btn-small" onclick="editUserFromTopList('${user.id}', '${escapeHtml(user.email)}')">Edit</button>
@@ -1089,14 +1091,15 @@
                 }
 
                 // Update recent activity
-                if (data.recentActivity && data.recentActivity.length > 0) {
+                const recentActivity = data.recent_activity || [];
+                if (recentActivity.length > 0) {
                     let html = '';
-                    data.recentActivity.forEach(activity => {
-                        const time = new Date(activity.timestamp).toLocaleString();
+                    recentActivity.forEach(activity => {
+                        const time = new Date(activity.created_at).toLocaleString();
                         html += `
                             <tr>
                                 <td>${time}</td>
-                                <td>${escapeHtml(activity.userEmail)}</td>
+                                <td>${escapeHtml(activity.email || activity.display_name || '')}</td>
                                 <td>${escapeHtml(activity.action)}</td>
                                 <td>${escapeHtml(activity.details || '')}</td>
                             </tr>
@@ -1115,7 +1118,8 @@
                 const response = await fetch('/api/admin/users', {
                     credentials: 'include'
                 });
-                allUsers = response.json ? await response.json() : JSON.parse(response);
+                const data = await response.json();
+                allUsers = data.users || [];
                 if (!Array.isArray(allUsers)) {
                     allUsers = [];
                 }
@@ -1132,12 +1136,12 @@
             const statusFilter = document.getElementById('statusFilter').value;
 
             let filtered = allUsers.filter(user => {
-                const matchesSearch = user.email.toLowerCase().includes(searchTerm) ||
-                                    (user.displayName && user.displayName.toLowerCase().includes(searchTerm));
+                const matchesSearch = (user.email || '').toLowerCase().includes(searchTerm) ||
+                                    (user.display_name && user.display_name.toLowerCase().includes(searchTerm));
                 const matchesRole = !roleFilter || user.role === roleFilter;
                 const matchesStatus = !statusFilter ||
-                                    (statusFilter === 'active' && !user.suspended) ||
-                                    (statusFilter === 'suspended' && user.suspended);
+                                    (statusFilter === 'active' && user.is_active && !user.is_suspended) ||
+                                    (statusFilter === 'suspended' && user.is_suspended);
                 return matchesSearch && matchesRole && matchesStatus;
             });
 
@@ -1157,22 +1161,22 @@
                 html = '<tr><td colspan="9" class="empty-state">No users found</td></tr>';
             } else {
                 paged.forEach(user => {
-                    const created = new Date(user.createdAt).toLocaleDateString();
-                    const lastLogin = user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never';
-                    const statusBadge = user.suspended ? 'suspended' : 'active';
-                    const statusText = user.suspended ? 'Suspended' : 'Active';
+                    const created = new Date(user.created_at).toLocaleDateString();
+                    const lastLogin = user.last_login_at ? new Date(user.last_login_at).toLocaleString() : 'Never';
+                    const statusBadge = user.is_suspended ? 'suspended' : 'active';
+                    const statusText = user.is_suspended ? 'Suspended' : 'Active';
                     html += `
                         <tr>
                             <td>${escapeHtml(user.email)}</td>
-                            <td>${escapeHtml(user.displayName || '')}</td>
+                            <td>${escapeHtml(user.display_name || '')}</td>
                             <td><span class="badge ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">${user.role}</span></td>
                             <td><span class="badge badge-${statusBadge}">${statusText}</span></td>
-                            <td>${user.uploadCount || 0}</td>
-                            <td>${user.searchCount || 0}</td>
+                            <td>${user.upload_count || 0}</td>
+                            <td>${user.search_count || 0}</td>
                             <td>${created}</td>
                             <td>${lastLogin}</td>
                             <td>
-                                <button class="btn btn-secondary btn-small" onclick="openEditUserModal('${user.id}', '${escapeHtml(user.email)}', '${escapeHtml(user.displayName || '')}', '${user.role}', ${!user.suspended}, ${user.suspended})">Edit</button>
+                                <button class="btn btn-secondary btn-small" onclick="openEditUserModal('${user.id}', '${escapeHtml(user.email)}', '${escapeHtml(user.display_name || '')}', '${user.role}', ${user.is_active ? true : false}, ${user.is_suspended ? true : false})">Edit</button>
                             </td>
                         </tr>
                     `;
@@ -1203,9 +1207,9 @@
         }
 
         function editUserFromTopList(userId, email) {
-            const user = allUsers.find(u => u.id === userId);
+            const user = allUsers.find(u => String(u.id) === String(userId));
             if (user) {
-                openEditUserModal(userId, email, user.displayName || '', user.role, !user.suspended, user.suspended);
+                openEditUserModal(userId, email, user.display_name || '', user.role, user.is_active ? true : false, user.is_suspended ? true : false);
             }
         }
 
@@ -1300,14 +1304,14 @@
                 html = '<tr><td colspan="5" class="empty-state">No activity found</td></tr>';
             } else {
                 paged.forEach(activity => {
-                    const time = new Date(activity.timestamp).toLocaleString();
+                    const time = new Date(activity.created_at).toLocaleString();
                     html += `
                         <tr>
                             <td>${time}</td>
-                            <td>${escapeHtml(activity.userEmail)}</td>
+                            <td>${escapeHtml(activity.email || activity.display_name || '')}</td>
                             <td>${escapeHtml(activity.action)}</td>
                             <td>${escapeHtml(activity.details || '')}</td>
-                            <td>${escapeHtml(activity.ipAddress || '')}</td>
+                            <td></td>
                         </tr>
                     `;
                 });
