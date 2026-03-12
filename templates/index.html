@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TIFP Mill Lists — Trading Intelligence</title>
+<style>
+/* ─── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1117;
+  --bg-card: #1a1d27;
+  --bg-hover: #222633;
+  --bg-input: #151820;
+  --border: #2a2e3a;
+  --border-focus: #4f7df9;
+  --text: #e4e6ed;
+  --text-dim: #8b8fa3;
+  --text-bright: #ffffff;
+  --accent: #4f7df9;
+  --accent-soft: rgba(79,125,249,0.12);
+  --green: #34d399;
+  --green-soft: rgba(52,211,153,0.12);
+  --amber: #fbbf24;
+  --amber-soft: rgba(251,191,36,0.12);
+  --red: #f87171;
+  --red-soft: rgba(248,113,113,0.12);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+button { font-family: var(--font); cursor: pointer; border: none; }
+input, select, textarea { font-family: var(--font); }
+
+/* ─── Layout ───────────────────────────────────────────── */
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 220px; background: var(--bg-card); border-right: 1px solid var(--border);
+  padding: 20px 0; display: flex; flex-direction: column; position: fixed;
+  height: 100vh; z-index: 100;
+}
+.sidebar-logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.sidebar-logo h1 { font-size: 18px; font-weight: 700; color: var(--text-bright); letter-spacing: -0.5px; }
+.sidebar-logo span { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+  color: var(--text-dim); font-size: 14px; font-weight: 500;
+  transition: all 0.15s; cursor: pointer; border-left: 3px solid transparent;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--text); }
+.nav-item.active { color: var(--accent); background: var(--accent-soft); border-left-color: var(--accent); }
+.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.main { margin-left: 220px; flex: 1; padding: 24px 32px; min-width: 0; }
+
+/* ─── Page Header ──────────────────────────────────────── */
+.page-header { margin-bottom: 24px; }
+.page-header h2 { font-size: 22px; font-weight: 700; color: var(--text-bright); }
+.page-header p { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+
+/* ─── Cards ────────────────────────────────────────────── */
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { text-align: center; }
+.stat-card .stat-value { font-size: 32px; font-weight: 700; color: var(--text-bright); }
+.stat-card .stat-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+/* ─── Search Box ───────────────────────────────────────── */
+.search-container { margin-bottom: 24px; }
+.search-box {
+  display: flex; align-items: center; background: var(--bg-card);
+  border: 2px solid var(--border); border-radius: var(--radius-lg);
+  padding: 4px; transition: border-color 0.2s;
+}
+.search-box:focus-within { border-color: var(--accent); }
+.search-box svg { margin: 0 12px; color: var(--text-dim); width: 20px; height: 20px; flex-shrink: 0; }
+.search-box input {
+  flex: 1; background: transparent; border: none; color: var(--text-bright);
+  font-size: 15px; padding: 12px 0; outline: none;
+}
+.search-box input::placeholder { color: var(--text-dim); }
+.search-box button {
+  background: var(--accent); color: white; padding: 10px 24px;
+  border-radius: var(--radius); font-size: 14px; font-weight: 600;
+  transition: opacity 0.15s;
+}
+.search-box button:hover { opacity: 0.9; }
+
+/* ─── Upload Zone ──────────────────────────────────────── */
+.upload-zone {
+  border: 2px dashed var(--border); border-radius: var(--radius-lg);
+  padding: 48px 24px; text-align: center; transition: all 0.2s;
+  cursor: pointer; background: var(--bg-card);
+}
+.upload-zone.drag-over { border-color: var(--accent); background: var(--accent-soft); }
+.upload-zone svg { width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 16px; }
+.upload-zone h3 { font-size: 16px; color: var(--text-bright); margin-bottom: 4px; }
+.upload-zone p { font-size: 13px; color: var(--text-dim); }
+.upload-zone input[type="file"] { display: none; }
+.upload-progress { margin-top: 16px; }
+.upload-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: var(--bg-hover); border-radius: var(--radius); margin-top: 8px;
+}
+.upload-item .name { flex: 1; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.upload-item .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+
+/* ─── Table ────────────────────────────────────────────── */
+.table-controls { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.table-controls select, .table-controls input {
+  background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 12px; border-radius: var(--radius); font-size: 13px;
+}
+.table-controls select:focus, .table-controls input:focus { border-color: var(--accent); outline: none; }
+.btn {
+  padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+  transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-secondary { background: var(--bg-hover); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger { background: var(--red-soft); color: var(--red); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+.data-table-wrap { overflow-x: auto; }
+.data-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.data-table thead th {
+  text-align: left; padding: 10px 12px; background: var(--bg-hover);
+  color: var(--text-dim); font-weight: 600; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+  cursor: pointer; user-select: none; position: sticky; top: 0;
+}
+.data-table thead th:hover { color: var(--text); }
+.data-table thead th.sorted { color: var(--accent); }
+.data-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+.data-table tbody tr:hover { background: var(--bg-hover); }
+.data-table td { padding: 10px 12px; vertical-align: middle; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.data-table td.wrap { white-space: normal; }
+.data-table .check-col { width: 36px; text-align: center; }
+.data-table input[type="checkbox"] { accent-color: var(--accent); }
+.confidence-bar { height: 4px; border-radius: 2px; background: var(--border); width: 60px; display: inline-block; vertical-align: middle; }
+.confidence-bar .fill { height: 100%; border-radius: 2px; }
+
+/* ─── Badges ───────────────────────────────────────────── */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.badge-green { background: var(--green-soft); color: var(--green); }
+.badge-amber { background: var(--amber-soft); color: var(--amber); }
+.badge-red { background: var(--red-soft); color: var(--red); }
+.badge-blue { background: var(--accent-soft); color: var(--accent); }
+
+/* ─── Pagination ───────────────────────────────────────── */
+.pagination { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.pagination .info { font-size: 13px; color: var(--text-dim); }
+
+/* ─── Modal ────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 24px;
+}
+.modal h3 { font-size: 18px; margin-bottom: 16px; color: var(--text-bright); }
+.modal label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 4px; margin-top: 12px; }
+.modal input, .modal select, .modal textarea {
+  width: 100%; padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--radius); font-size: 14px;
+}
+.modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--accent); outline: none; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* ─── Empty State ──────────────────────────────────────── */
+.empty-state { text-align: center; padding: 48px 24px; color: var(--text-dim); }
+.empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3; }
+.empty-state h3 { font-size: 16px; color: var(--text); margin-bottom: 4px; }
+
+/* ─── Loading ──────────────────────────────────────────── */
+.spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay { display: flex; align-items: center; justify-content: center; padding: 48px; }
+
+/* ─── Tabs ─────────────────────────────────────────────── */
+.tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab { padding: 10px 20px; font-size: 14px; color: var(--text-dim); font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ─── Search Results ───────────────────────────────────── */
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.result-header h3 { font-size: 16px; }
+.match-type { font-size: 10px; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 700; }
+
+/* ─── Responsive ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .sidebar { width: 60px; }
+  .sidebar .nav-label, .sidebar-logo span, .sidebar-logo h1 { display: none; }
+  .sidebar-logo { padding: 10px; }
+  .main { margin-left: 60px; padding: 16px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ─── Utility ──────────────────────────────────────────── */
+.flex { display: flex; }
+.gap-8 { gap: 8px; }
+.gap-16 { gap: 16px; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.ml-auto { margin-left: auto; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mb-16 { margin-bottom: 16px; }
+.text-sm { font-size: 13px; }
+.text-dim { color: var(--text-dim); }
+.text-bright { color: var(--text-bright); }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h1>TIFP</h1>
+      <span>Mill Lists</span>
+    </div>
+    <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="nav-label">Dashboard</span>
+    </div>
+    <div class="nav-item" data-page="search" onclick="showPage('search')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <span class="nav-label">Search</span>
+    </div>
+    <div class="nav-item" data-page="upload" onclick="showPage('upload')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span class="nav-label">Upload</span>
+    </div>
+    <div class="nav-item" data-page="inventory" onclick="showPage('inventory')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="nav-label">Inventory</span>
+    </div>
+    <div class="nav-item" data-page="uploads" onclick="showPage('uploads')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      <span class="nav-label">Files</span>
+    </div>
+    <div class="nav-item" data-page="review" onclick="showPage('review')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span class="nav-label">Review</span>
+    </div>
+    <div class="nav-item" data-page="settings" onclick="showPage('settings')" style="margin-top:auto;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="nav-label">Settings</span>
+    </div>
+    <a id="admin-link" href="/admin" class="nav-item" style="display:none;color:var(--amber);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span class="nav-label">Admin</span>
+    </a>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);margin-top:8px;">
+      <div id="sidebar-user-email" class="text-sm text-dim" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px;"></div>
+      <a href="#" onclick="doLogout();return false;" class="text-sm" style="color:var(--red);">Log Out</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div id="page-dashboard" class="page">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <p>TIFP Trading Intelligence — Mill Stock Overview</p>
+      </div>
+      <div id="stats-grid" class="stat-grid"></div>
+      <div class="search-container">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="dashboard-search" placeholder="Search across all mill lists... (e.g., '4/4 cherry FAS' or 'who has white oak 8/4')" onkeydown="if(event.key==='Enter'){showPage('search');document.getElementById('search-input').value=this.value;doSearch();}">
+          <button onclick="showPage('search');document.getElementById('search-input').value=document.getElementById('dashboard-search').value;doSearch();">Search</button>
+        </div>
+      </div>
+      <div class="flex gap-16" style="flex-wrap:wrap;">
+        <div class="card" style="flex:1;min-width:300px;">
+          <h3 class="text-bright mb-16" style="font-size:15px;">Recent Uploads</h3>
+          <div id="recent-uploads"></div>
+        </div>
+        <div class="card" style="flex:1;min-width:300px;">
+          <h3 class="text-bright mb-16" style="font-size:15px;">Top Species</h3>
+          <div id="top-species"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SEARCH ═══ -->
+    <div id="page-search" class="page hidden">
+      <div class="page-header">
+        <h2>Search Mill Lists</h2>
+        <p>Natural language search across all uploaded inventory</p>
+      </div>
+      <div class="search-container">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="search-input" placeholder="Find all mills with 4/4 cherry FAS, or: who has 8/4 white oak select &amp; better..." onkeydown="if(event.key==='Enter')doSearch();">
+          <button onclick="doSearch()">Search</button>
+        </div>
+        <div class="mt-8 text-sm text-dim">
+          Try: "4/4 cherry FAS" · "hard maple select & better" · "8/4 walnut" · "white oak rift & quartered" · "red oak #1 common"
+        </div>
+      </div>
+      <div id="search-results"></div>
+    </div>
+
+    <!-- ═══ UPLOAD ═══ -->
+    <div id="page-upload" class="page hidden">
+      <div class="page-header">
+        <h2>Upload Mill Lists</h2>
+        <p>Drag and drop PDF, Excel, or CSV mill stock lists</p>
+      </div>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click();"
+           ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <h3>Drop files here or click to browse</h3>
+        <p>Supports PDF, Excel (.xlsx), and CSV files</p>
+        <input type="file" id="file-input" multiple accept=".pdf,.xlsx,.xls,.csv" onchange="handleFiles(this.files)">
+      </div>
+      <div id="upload-results" class="upload-progress"></div>
+    </div>
+
+    <!-- ═══ INVENTORY ═══ -->
+    <div id="page-inventory" class="page hidden">
+      <div class="page-header flex justify-between items-center">
+        <div>
+          <h2>Inventory</h2>
+          <p>All parsed product records across mill lists</p>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-controls">
+          <input type="text" id="inv-search" placeholder="Filter..." style="width:200px;" oninput="applyInventoryFilters()">
+          <select id="inv-mill" onchange="applyInventoryFilters()"><option value="">All Mills</option></select>
+          <select id="inv-species" onchange="applyInventoryFilters()"><option value="">All Species</option></select>
+          <select id="inv-thickness" onchange="applyInventoryFilters()"><option value="">All Thicknesses</option></select>
+          <select id="inv-grade" onchange="applyInventoryFilters()"><option value="">All Grades</option></select>
+          <span class="ml-auto text-sm text-dim" id="inv-count"></span>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table" id="inventory-table">
+            <thead>
+              <tr>
+                <th class="check-col"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
+                <th onclick="sortInventory('mill_name')">Mill</th>
+                <th onclick="sortInventory('species')">Species</th>
+                <th onclick="sortInventory('thickness')">Thickness</th>
+                <th onclick="sortInventory('grade')">Grade</th>
+                <th onclick="sortInventory('quantity_numeric')">Qty (BF)</th>
+                <th>Description</th>
+                <th>Color</th>
+                <th>Surface</th>
+                <th>Length</th>
+                <th onclick="sortInventory('confidence')">Confidence</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-body"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="inv-pagination"></div>
+      </div>
+      <div id="bulk-bar" class="hidden" style="position:fixed;bottom:0;left:220px;right:0;background:var(--bg-card);border-top:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;gap:12px;z-index:50;">
+        <span class="text-sm" id="selected-count">0 selected</span>
+        <button class="btn btn-primary btn-sm" onclick="bulkAction('review')">Mark Reviewed</button>
+        <button class="btn btn-secondary btn-sm" onclick="bulkAction('flag')">Flag</button>
+        <button class="btn btn-danger btn-sm" onclick="bulkAction('delete')">Delete</button>
+      </div>
+    </div>
+
+    <!-- ═══ FILES ═══ -->
+    <div id="page-uploads" class="page hidden">
+      <div class="page-header">
+        <h2>Uploaded Files</h2>
+        <p>Manage uploaded mill stock lists</p>
+      </div>
+      <div id="uploads-list"></div>
+    </div>
+
+    <!-- ═══ SETTINGS ═══ -->
+    <div id="page-settings" class="page hidden">
+      <div class="page-header">
+        <h2>Settings</h2>
+        <p>Configure integrations and parsing options</p>
+      </div>
+      <div class="card" style="max-width:600px;">
+        <h3 style="font-size:15px;margin-bottom:4px;" class="text-bright">OpenAI API Key</h3>
+        <p class="text-sm text-dim mb-16">Required for AI-powered parsing. Get your key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a></p>
+        <div id="key-status" style="margin-bottom:16px;padding:10px 14px;border-radius:var(--radius);font-size:13px;display:none;"></div>
+        <div class="flex gap-8" style="align-items:stretch;">
+          <input type="password" id="openai-key-input" placeholder="sk-..." style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;"
+            onfocus="this.style.borderColor='var(--border-focus)'" onblur="this.style.borderColor='var(--border)'"
+            onkeydown="if(event.key==='Enter')saveApiKey()">
+          <button class="btn btn-primary" onclick="saveApiKey()" id="save-key-btn">Save Key</button>
+          <button class="btn btn-secondary" onclick="clearApiKey()" id="clear-key-btn" style="display:none;">Clear</button>
+        </div>
+        <p class="text-sm text-dim mt-8">The key is stored locally in <code style="font-family:var(--mono);background:var(--bg);padding:2px 5px;border-radius:3px;">config.json</code> on your server and never transmitted elsewhere.</p>
+      </div>
+      <div class="card" style="max-width:600px;margin-top:16px;">
+        <h3 style="font-size:15px;margin-bottom:4px;" class="text-bright">Parsing Methods</h3>
+        <p class="text-sm text-dim mb-12">The tool tries parsers in this order and uses the first that succeeds:</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
+            <span style="width:24px;height:24px;background:var(--green-soft);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--green);font-weight:700;">1</span>
+            <div><div class="text-bright" style="font-size:13px;font-weight:600;">Column-Aware PDF Parser</div><div class="text-dim" style="font-size:12px;">Splits multi-column PDFs by x-position (Devereaux, Granite Valley, etc.)</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
+            <span style="width:24px;height:24px;background:var(--green-soft);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--green);font-weight:700;">2</span>
+            <div><div class="text-bright" style="font-size:13px;font-weight:600;">Table + Species-Header Parser</div><div class="text-dim" style="font-size:12px;">Handles pdfplumber tables with species embedded in headers (Tigerton, etc.)</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
+            <span style="width:24px;height:24px;background:var(--green-soft);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--green);font-weight:700;">3</span>
+            <div><div class="text-bright" style="font-size:13px;font-weight:600;">Line-by-Line Text Parser</div><div class="text-dim" style="font-size:12px;">Reads plain-text PDFs line by line, tracking species section headers (Brenneman, etc.)</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
+            <span style="width:24px;height:24px;background:var(--amber-soft);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--amber);font-weight:700;">4</span>
+            <div><div class="text-bright" style="font-size:13px;font-weight:600;">OCR Fallback</div><div class="text-dim" style="font-size:12px;">Converts scanned/image PDFs to text via Tesseract OCR (CC Cook, etc.)</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);" id="ai-method-row">
+            <span style="width:24px;height:24px;background:var(--accent-soft);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent);font-weight:700;">AI</span>
+            <div><div class="text-bright" style="font-size:13px;font-weight:600;">AI Parser (GPT-4o) <span id="ai-key-badge" class="badge" style="margin-left:6px;font-size:10px;"></span></div><div class="text-dim" style="font-size:12px;">Manually triggered per-file. Requires OpenAI API key above.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ REVIEW ═══ -->
+    <div id="page-review" class="page hidden">
+      <div class="page-header">
+        <h2>Review &amp; Correct</h2>
+        <p>Review low-confidence parses and flagged items</p>
+      </div>
+      <div class="tab-bar">
+        <div class="tab active" onclick="loadReview('low-confidence',this)">Low Confidence</div>
+        <div class="tab" onclick="loadReview('flagged',this)">Flagged</div>
+        <div class="tab" onclick="loadReview('unreviewed',this)">Unreviewed</div>
+      </div>
+      <div id="review-content"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <h3>Edit Product</h3>
+    <input type="hidden" id="edit-id">
+    <label>Mill</label><input id="edit-mill_name">
+    <label>Species</label><input id="edit-species">
+    <label>Thickness</label><input id="edit-thickness">
+    <label>Grade</label><input id="edit-grade">
+    <label>Quantity</label><input id="edit-quantity">
+    <label>Color</label><input id="edit-color">
+    <label>Surface</label><input id="edit-surface">
+    <label>Length</label><input id="edit-length">
+    <label>Cut Type</label><input id="edit-cut_type">
+    <label>Treatment</label><input id="edit-treatment">
+    <label>Notes</label><textarea id="edit-notes" rows="2"></textarea>
+    <label>Raw Text</label><div id="edit-raw" class="text-sm text-dim mt-8" style="background:var(--bg);padding:8px;border-radius:4px;font-family:var(--mono);font-size:12px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────
+let currentPage = 'dashboard';
+let inventoryData = [];
+let inventorySort = { col: 'id', dir: 'asc' };
+let inventoryOffset = 0;
+const LIMIT = 100;
+let selectedIds = new Set();
+let filterCache = null;
+
+// ─── Navigation ──────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  document.getElementById('page-' + page).classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+  currentPage = page;
+
+  if (page === 'dashboard') loadDashboard();
+  else if (page === 'inventory') loadInventory();
+  else if (page === 'uploads') loadUploads();
+  else if (page === 'review') loadReview('low-confidence');
+  else if (page === 'settings') loadSettings();
+}
+
+// ─── API Helpers ─────────────────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch('/api/' + path, {
+    headers: { 'Content-Type': 'application/json', ...opts.headers },
+    ...opts
+  });
+  if (res.status === 401) {
+    window.location.href = '/auth#login';
+    return {};
+  }
+  return res.json();
+}
+
+// ─── Dashboard ───────────────────────────────────────────
+async function loadDashboard() {
+  const stats = await api('stats');
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="card stat-card"><div class="stat-value">${stats.total_mills}</div><div class="stat-label">Mills</div></div>
+    <div class="card stat-card"><div class="stat-value">${num(stats.total_products)}</div><div class="stat-label">Products</div></div>
+    <div class="card stat-card"><div class="stat-value">${stats.total_uploads}</div><div class="stat-label">Uploads</div></div>
+    <div class="card stat-card"><div class="stat-value">${stats.total_species}</div><div class="stat-label">Species</div></div>
+  `;
+
+  const ru = document.getElementById('recent-uploads');
+  if (!stats.recent_uploads?.length) {
+    ru.innerHTML = '<div class="text-sm text-dim">No uploads yet. Upload some mill lists to get started.</div>';
+  } else {
+    ru.innerHTML = stats.recent_uploads.map(u => `
+      <div class="flex items-center gap-8 mt-8">
+        <span class="badge ${u.status === 'parsed' ? 'badge-green' : u.status === 'failed' ? 'badge-red' : 'badge-amber'}">${u.status}</span>
+        <span class="text-sm" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(u.original_filename)}</span>
+        <span class="text-sm text-dim">${u.row_count || 0} rows</span>
+      </div>
+    `).join('');
+  }
+
+  const ts = document.getElementById('top-species');
+  if (!stats.top_species?.length) {
+    ts.innerHTML = '<div class="text-sm text-dim">No data yet.</div>';
+  } else {
+    const max = stats.top_species[0]?.count || 1;
+    ts.innerHTML = stats.top_species.map(s => `
+      <div class="flex items-center gap-8 mt-8">
+        <span class="text-sm" style="width:120px;">${esc(s.species)}</span>
+        <div style="flex:1;background:var(--border);height:6px;border-radius:3px;">
+          <div style="width:${(s.count/max)*100}%;background:var(--accent);height:100%;border-radius:3px;"></div>
+        </div>
+        <span class="text-sm text-dim" style="width:40px;text-align:right;">${s.count}</span>
+      </div>
+    `).join('');
+  }
+}
+
+// ─── Search ──────────────────────────────────────────────
+async function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+
+  const div = document.getElementById('search-results');
+  div.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
+
+  const data = await api('search?q=' + encodeURIComponent(q) + '&limit=200');
+
+  if (!data.results?.length) {
+    div.innerHTML = `<div class="empty-state"><h3>No results found</h3><p>Try different terms or check spelling. Synonyms are expanded automatically.</p></div>`;
+    return;
+  }
+
+  // Group by mill
+  const byMill = {};
+  data.results.forEach(r => {
+    const mill = r.mill_name || 'Unknown Mill';
+    if (!byMill[mill]) byMill[mill] = [];
+    byMill[mill].push(r);
+  });
+
+  let html = `<div class="result-header"><h3>${data.total} results across ${Object.keys(byMill).length} mills</h3></div>`;
+
+  for (const [mill, products] of Object.entries(byMill)) {
+    html += `<div class="card mb-16">
+      <h3 style="font-size:15px;margin-bottom:12px;" class="text-bright">${esc(mill)} <span class="badge badge-blue">${products.length}</span></h3>
+      <div class="data-table-wrap"><table class="data-table"><thead><tr>
+        <th>Species</th><th>Thickness</th><th>Grade</th><th>Qty</th><th>Color</th><th>Length</th><th>Match</th>
+      </tr></thead><tbody>`;
+
+    products.forEach(p => {
+      const matchClass = p.match_type === 'exact' ? 'badge-green' : p.match_type === 'partial' ? 'badge-amber' : 'badge-blue';
+      html += `<tr>
+        <td>${esc(p.species)}</td>
+        <td><strong>${esc(p.thickness)}</strong></td>
+        <td>${esc(p.grade)}</td>
+        <td>${esc(p.quantity)}</td>
+        <td>${esc(p.color)}</td>
+        <td>${esc(p.length)}</td>
+        <td><span class="badge ${matchClass}">${p.match_type}</span></td>
+      </tr>`;
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  div.innerHTML = html;
+}
+
+// ─── Upload ──────────────────────────────────────────────
+function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function handleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+}
+
+async function handleFiles(files) {
+  if (!files.length) return;
+  const resultsDiv = document.getElementById('upload-results');
+
+  for (const file of files) {
+    const item = document.createElement('div');
+    item.className = 'upload-item';
+    item.innerHTML = `<span class="name">${esc(file.name)}</span><div class="spinner"></div><span class="status-badge badge-amber">Processing...</span>`;
+    resultsDiv.prepend(item);
+  }
+
+  const formData = new FormData();
+  for (const file of files) formData.append('files', file);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    resultsDiv.innerHTML = '';
+    (data.uploads || []).forEach(u => {
+      const statusClass = u.status === 'parsed' ? 'badge-green' : 'badge-red';
+      resultsDiv.innerHTML += `<div class="upload-item">
+        <span class="name">${esc(u.filename)}</span>
+        <span class="text-sm text-dim">${u.mill_name ? 'Mill: ' + esc(u.mill_name) : ''}</span>
+        <span class="text-sm">${u.row_count || 0} rows</span>
+        <span class="badge ${statusClass}">${u.status}</span>
+        ${u.status === 'parsed' ? `<button class="btn btn-sm btn-secondary" onclick="showPage('inventory')">View</button>` : ''}
+        ${u.errors?.length ? `<span class="text-sm" style="color:var(--red);">${esc(u.errors[0])}</span>` : ''}
+      </div>`;
+    });
+  } catch (err) {
+    resultsDiv.innerHTML = `<div class="upload-item"><span class="name text-sm" style="color:var(--red);">Upload failed: ${err.message}</span></div>`;
+  }
+}
+
+// ─── Inventory ───────────────────────────────────────────
+async function loadInventory() {
+  await loadFilters();
+
+  const params = new URLSearchParams();
+  params.set('limit', LIMIT);
+  params.set('offset', inventoryOffset);
+  params.set('sort', inventorySort.col);
+  params.set('order', inventorySort.dir);
+
+  const mill = document.getElementById('inv-mill').value;
+  const species = document.getElementById('inv-species').value;
+  const thickness = document.getElementById('inv-thickness').value;
+  const grade = document.getElementById('inv-grade').value;
+  const search = document.getElementById('inv-search').value;
+
+  if (mill) params.set('mill', mill);
+  if (species) params.set('species', species);
+  if (thickness) params.set('thickness', thickness);
+  if (grade) params.set('grade', grade);
+
+  const data = await api('products?' + params.toString());
+  inventoryData = data.products || [];
+
+  // Client-side text filter
+  let filtered = inventoryData;
+  if (search) {
+    const s = search.toLowerCase();
+    filtered = inventoryData.filter(p =>
+      (p.product||'').toLowerCase().includes(s) ||
+      (p.product_normalized||'').toLowerCase().includes(s) ||
+      (p.mill_name||'').toLowerCase().includes(s) ||
+      (p.species||'').toLowerCase().includes(s) ||
+      (p.grade||'').toLowerCase().includes(s)
+    );
+  }
+
+  document.getElementById('inv-count').textContent = `${data.total} total products`;
+  renderInventoryTable(filtered);
+  renderPagination(data.total, data.offset, data.limit);
+}
+
+function renderInventoryTable(products) {
+  const tbody = document.getElementById('inventory-body');
+  if (!products.length) {
+    tbody.innerHTML = '<tr><td colspan="12" class="text-dim" style="text-align:center;padding:32px;">No products found. Upload some mill lists first.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = products.map(p => {
+    const conf = p.confidence || 0;
+    const confColor = conf >= 0.7 ? 'var(--green)' : conf >= 0.4 ? 'var(--amber)' : 'var(--red)';
+    return `<tr data-id="${p.id}">
+      <td class="check-col"><input type="checkbox" value="${p.id}" onchange="toggleSelect(${p.id},this.checked)"></td>
+      <td title="${esc(p.mill_name)}"><strong>${esc(p.mill_name)}</strong></td>
+      <td>${esc(p.species)}</td>
+      <td><strong>${esc(p.thickness)}</strong></td>
+      <td>${esc(p.grade)}</td>
+      <td>${p.quantity_numeric ? num(p.quantity_numeric) : esc(p.quantity)}</td>
+      <td class="wrap" title="${esc(p.description)}">${esc(p.description||p.product)}</td>
+      <td>${esc(p.color)}</td>
+      <td>${esc(p.surface)}</td>
+      <td>${esc(p.length)}</td>
+      <td><div class="confidence-bar"><div class="fill" style="width:${conf*100}%;background:${confColor};"></div></div></td>
+      <td><button class="btn btn-sm btn-secondary" onclick="editProduct(${p.id})">Edit</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPagination(total, offset, limit) {
+  const div = document.getElementById('inv-pagination');
+  const pages = Math.ceil(total / limit);
+  const current = Math.floor(offset / limit) + 1;
+  div.innerHTML = `
+    <span class="info">Showing ${offset + 1}-${Math.min(offset + limit, total)} of ${total}</span>
+    <div class="flex gap-8">
+      <button class="btn btn-sm btn-secondary" ${offset === 0 ? 'disabled' : ''} onclick="inventoryOffset=${offset-limit};loadInventory()">Prev</button>
+      <span class="text-sm text-dim" style="line-height:32px;">Page ${current} of ${pages}</span>
+      <button class="btn btn-sm btn-secondary" ${offset + limit >= total ? 'disabled' : ''} onclick="inventoryOffset=${offset+limit};loadInventory()">Next</button>
+    </div>
+  `;
+}
+
+function sortInventory(col) {
+  if (inventorySort.col === col) {
+    inventorySort.dir = inventorySort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    inventorySort.col = col;
+    inventorySort.dir = 'asc';
+  }
+  inventoryOffset = 0;
+  loadInventory();
+}
+
+function applyInventoryFilters() {
+  inventoryOffset = 0;
+  loadInventory();
+}
+
+async function loadFilters() {
+  if (filterCache) {
+    populateFilters(filterCache);
+    return;
+  }
+  const data = await api('filters');
+  filterCache = data;
+  populateFilters(data);
+}
+
+function populateFilters(data) {
+  populateSelect('inv-mill', data.mills, 'All Mills');
+  populateSelect('inv-species', data.species, 'All Species');
+  populateSelect('inv-thickness', data.thicknesses, 'All Thicknesses');
+  populateSelect('inv-grade', data.grades, 'All Grades');
+}
+
+function populateSelect(id, options, placeholder) {
+  const sel = document.getElementById(id);
+  const current = sel.value;
+  sel.innerHTML = `<option value="">${placeholder}</option>` +
+    options.map(o => `<option value="${esc(o)}" ${o === current ? 'selected' : ''}>${esc(o)}</option>`).join('');
+}
+
+// ─── Selection & Bulk ────────────────────────────────────
+function toggleSelect(id, checked) {
+  checked ? selectedIds.add(id) : selectedIds.delete(id);
+  updateBulkBar();
+}
+function toggleSelectAll(cb) {
+  document.querySelectorAll('#inventory-body input[type="checkbox"]').forEach(c => {
+    c.checked = cb.checked;
+    const id = parseInt(c.value);
+    cb.checked ? selectedIds.add(id) : selectedIds.delete(id);
+  });
+  updateBulkBar();
+}
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-bar');
+  if (selectedIds.size > 0) {
+    bar.classList.remove('hidden');
+    bar.style.display = 'flex';
+    document.getElementById('selected-count').textContent = selectedIds.size + ' selected';
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+async function bulkAction(action) {
+  if (!selectedIds.size) return;
+  if (action === 'delete' && !confirm(`Delete ${selectedIds.size} products?`)) return;
+  await api('products/bulk', { method: 'POST', body: JSON.stringify({ action, ids: [...selectedIds] }) });
+  selectedIds.clear();
+  updateBulkBar();
+  loadInventory();
+}
+
+// ─── Edit Modal ──────────────────────────────────────────
+async function editProduct(id) {
+  const p = await api('products/' + id);
+  document.getElementById('edit-id').value = p.id;
+  ['mill_name','species','thickness','grade','quantity','color','surface','length','cut_type','treatment','notes'].forEach(f => {
+    document.getElementById('edit-' + f).value = p[f] || '';
+  });
+  document.getElementById('edit-raw').textContent = p.raw_text || '';
+  document.getElementById('edit-modal').classList.add('active');
+}
+function closeModal() { document.getElementById('edit-modal').classList.remove('active'); }
+async function saveEdit() {
+  const id = document.getElementById('edit-id').value;
+  const data = {};
+  ['mill_name','species','thickness','grade','quantity','color','surface','length','cut_type','treatment','notes'].forEach(f => {
+    data[f] = document.getElementById('edit-' + f).value || null;
+  });
+  data.is_reviewed = 1;
+  data.confidence = 1.0;
+  await api('products/' + id, { method: 'PUT', body: JSON.stringify(data) });
+  closeModal();
+  if (currentPage === 'inventory') loadInventory();
+  else if (currentPage === 'review') loadReview('low-confidence');
+}
+
+// ─── Uploads List ────────────────────────────────────────
+async function loadUploads() {
+  const data = await api('uploads');
+  const div = document.getElementById('uploads-list');
+
+  if (!data.uploads?.length) {
+    div.innerHTML = '<div class="empty-state"><h3>No files uploaded yet</h3><p>Go to the Upload page to add mill lists.</p></div>';
+    return;
+  }
+
+  div.innerHTML = data.uploads.map(u => `
+    <div class="card mb-16 flex items-center gap-16" style="flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <div class="text-bright" style="font-weight:600;">${esc(u.original_filename)}</div>
+        <div class="text-sm text-dim mt-8">${esc(u.mill_name_detected || 'Mill not detected')} · ${u.file_type?.toUpperCase()} · ${formatSize(u.file_size)}</div>
+      </div>
+      <span class="badge ${u.status === 'parsed' ? 'badge-green' : u.status === 'failed' ? 'badge-red' : 'badge-amber'}">${u.status}</span>
+      <span class="text-sm">${u.row_count || 0} rows</span>
+      <span class="text-sm text-dim">${u.parsing_method || ''}</span>
+      <div class="flex gap-8">
+        ${u.status === 'parsed' ? `<button class="btn btn-sm btn-secondary" onclick="viewUploadProducts(${u.id})">View Products</button>` : ''}
+        <button class="btn btn-sm btn-secondary" onclick="reparseUpload(${u.id},'auto')">Re-parse</button>
+        <button class="btn btn-sm btn-secondary" onclick="reparseUpload(${u.id},'ai')">AI Parse</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteUpload(${u.id})">Delete</button>
+      </div>
+      ${u.error_message ? `<div class="text-sm" style="color:var(--red);width:100%;">${esc(u.error_message)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function viewUploadProducts(uploadId) {
+  showPage('inventory');
+  // wait for load, then filter
+  setTimeout(() => {
+    document.getElementById('inv-search').value = '';
+    inventoryOffset = 0;
+    loadInventory();
+  }, 100);
+}
+
+async function reparseUpload(id, method) {
+  if (!confirm(`Re-parse this upload${method === 'ai' ? ' using AI (requires OpenAI API key)' : ''}?`)) return;
+  const res = await api(`uploads/${id}/reparse`, { method: 'POST', body: JSON.stringify({ method }) });
+  alert(res.success ? `Parsed ${res.row_count} rows (${res.method})` : `Error: ${res.errors?.join(', ') || res.error}`);
+  loadUploads();
+}
+
+async function deleteUpload(id) {
+  if (!confirm('Delete this upload and all its parsed products?')) return;
+  await api(`uploads/${id}`, { method: 'DELETE' });
+  filterCache = null;
+  loadUploads();
+}
+
+// ─── Review ──────────────────────────────────────────────
+async function loadReview(type, tabEl) {
+  if (tabEl) {
+    document.querySelectorAll('#page-review .tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+  }
+
+  const params = new URLSearchParams({ limit: '50', sort: 'confidence', order: 'asc' });
+  if (type === 'low-confidence') { /* default sort by confidence asc */ }
+  else if (type === 'flagged') params.set('flagged', '1');
+  else if (type === 'unreviewed') params.set('unreviewed', '1');
+
+  const data = await api('products?' + params.toString());
+  const div = document.getElementById('review-content');
+
+  let products = data.products || [];
+  if (type === 'low-confidence') products = products.filter(p => (p.confidence || 0) < 0.6);
+
+  if (!products.length) {
+    div.innerHTML = '<div class="empty-state"><h3>Nothing to review</h3><p>All products look good.</p></div>';
+    return;
+  }
+
+  div.innerHTML = `<div class="card"><div class="data-table-wrap"><table class="data-table"><thead><tr>
+    <th>Mill</th><th>Species</th><th>Thickness</th><th>Grade</th><th>Qty</th><th>Raw Text</th><th>Confidence</th><th>Actions</th>
+  </tr></thead><tbody>` +
+  products.map(p => {
+    const conf = p.confidence || 0;
+    const confColor = conf >= 0.7 ? 'var(--green)' : conf >= 0.4 ? 'var(--amber)' : 'var(--red)';
+    return `<tr>
+      <td>${esc(p.mill_name)}</td>
+      <td>${esc(p.species)}</td>
+      <td>${esc(p.thickness)}</td>
+      <td>${esc(p.grade)}</td>
+      <td>${esc(p.quantity)}</td>
+      <td class="wrap" style="font-family:var(--mono);font-size:11px;max-width:300px;">${esc(p.raw_text)}</td>
+      <td><div class="confidence-bar"><div class="fill" style="width:${conf*100}%;background:${confColor};"></div></div> <span class="text-sm text-dim">${Math.round(conf*100)}%</span></td>
+      <td class="flex gap-8">
+        <button class="btn btn-sm btn-primary" onclick="editProduct(${p.id})">Edit</button>
+        <button class="btn btn-sm btn-secondary" onclick="quickReview(${p.id})">Approve</button>
+      </td>
+    </tr>`;
+  }).join('') + '</tbody></table></div></div>';
+}
+
+async function quickReview(id) {
+  await api('products/' + id, { method: 'PUT', body: JSON.stringify({ is_reviewed: 1 }) });
+  loadReview('low-confidence');
+}
+
+// ─── Export ──────────────────────────────────────────────
+function exportCSV() {
+  const rows = inventoryData;
+  if (!rows.length) { alert('No data to export'); return; }
+  const headers = ['mill_name','species','thickness','grade','quantity','quantity_numeric','color','surface','length','cut_type','treatment','description','notes'];
+  const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mill-inventory-export.csv';
+  a.click();
+}
+
+// ─── Settings ────────────────────────────────────────────
+async function loadSettings() {
+  const data = await api('config');
+  const statusEl = document.getElementById('key-status');
+  const clearBtn = document.getElementById('clear-key-btn');
+  const badge = document.getElementById('ai-key-badge');
+
+  if (data.openai_key_set) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'var(--green-soft)';
+    statusEl.style.color = 'var(--green)';
+    statusEl.style.border = '1px solid rgba(52,211,153,0.3)';
+    statusEl.innerHTML = `✓ API key configured: <code style="font-family:var(--mono)">${data.openai_key_preview}</code>`;
+    clearBtn.style.display = 'inline-block';
+    badge.textContent = 'Key Set';
+    badge.className = 'badge badge-green';
+  } else {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'var(--amber-soft)';
+    statusEl.style.color = 'var(--amber)';
+    statusEl.style.border = '1px solid rgba(251,191,36,0.3)';
+    statusEl.textContent = '⚠ No API key configured. AI parsing will not be available.';
+    clearBtn.style.display = 'none';
+    badge.textContent = 'No Key';
+    badge.className = 'badge badge-amber';
+  }
+}
+
+async function saveApiKey() {
+  const key = document.getElementById('openai-key-input').value.trim();
+  if (!key) { alert('Please enter an API key.'); return; }
+  if (!key.startsWith('sk-')) { alert('OpenAI keys start with "sk-". Please check your key.'); return; }
+
+  const btn = document.getElementById('save-key-btn');
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  const res = await api('config', { method: 'POST', body: JSON.stringify({ openai_api_key: key }) });
+  btn.textContent = 'Save Key';
+  btn.disabled = false;
+
+  if (res.success) {
+    document.getElementById('openai-key-input').value = '';
+    loadSettings();
+  } else {
+    alert('Error saving key: ' + (res.error || 'Unknown error'));
+  }
+}
+
+async function clearApiKey() {
+  if (!confirm('Remove the saved OpenAI API key?')) return;
+  const res = await api('config', { method: 'POST', body: JSON.stringify({ openai_api_key: '' }) });
+  if (res.success) loadSettings();
+}
+
+// ─── Helpers ─────────────────────────────────────────────
+function esc(v) { if (v == null) return ''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function num(n) { return n == null ? '' : Number(n).toLocaleString(); }
+function formatSize(bytes) { if (!bytes) return ''; if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB'; return (bytes/1048576).toFixed(1) + ' MB'; }
+
+// ─── Auth / User Info ─────────────────────────────────────
+async function loadCurrentUser() {
+  try {
+    const res = await api('auth/me');
+    if (res.user) {
+      const el = document.getElementById('sidebar-user-email');
+      if (el) el.textContent = res.user.email;
+      if (res.user.role === 'admin') {
+        const link = document.getElementById('admin-link');
+        if (link) link.style.display = '';
+      }
+    }
+  } catch (e) {
+    // If 401, redirect to login
+    window.location.href = '/auth#login';
+  }
+}
+
+async function doLogout() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } catch (e) {}
+  window.location.href = '/auth#login';
+}
+
+// ─── Init ────────────────────────────────────────────────
+loadCurrentUser();
+loadDashboard();
+</script>
+</body>
+</html>

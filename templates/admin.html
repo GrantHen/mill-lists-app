@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIFP Admin Dashboard</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --bg-card: #1a1d27;
+            --bg-hover: #222633;
+            --border: #2a2e3a;
+            --text: #e4e6ed;
+            --text-dim: #8b8fa3;
+            --text-bright: #ffffff;
+            --accent: #4f7df9;
+            --green: #34d399;
+            --amber: #fbbf24;
+            --red: #f87171;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 220px;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 32px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-current-user {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            padding: 12px;
+            background-color: var(--bg-hover);
+            border-radius: 4px;
+            word-break: break-word;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            margin-bottom: 24px;
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: 12px 12px;
+            margin-bottom: 8px;
+            color: var(--text-dim);
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover {
+            background-color: var(--bg-hover);
+            color: var(--text);
+        }
+
+        .sidebar-nav a.active {
+            background-color: var(--accent);
+            color: var(--text-bright);
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+
+        .sidebar-footer a {
+            display: block;
+            padding: 12px 12px;
+            margin-bottom: 8px;
+            color: var(--text-dim);
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-footer a:hover {
+            background-color: var(--bg-hover);
+            color: var(--text);
+        }
+
+        .sidebar-footer a.logout:hover {
+            color: var(--red);
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px 32px;
+            border-bottom: 1px solid var(--border);
+            background-color: var(--bg-card);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Stat Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Bar Chart */
+        .chart-container {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .chart-bars {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            height: 200px;
+            padding: 0 16px;
+        }
+
+        .chart-bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .chart-bar {
+            width: 100%;
+            background: linear-gradient(180deg, var(--accent), #3d5ae8);
+            border-radius: 4px 4px 0 0;
+            margin-bottom: 8px;
+            transition: opacity 0.2s ease;
+            min-height: 4px;
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+
+        .chart-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* Tables */
+        .table-container {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 32px;
+        }
+
+        .table-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: var(--bg-hover);
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            padding: 12px 24px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background-color: var(--bg-hover);
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: rgba(26, 29, 39, 0.5);
+        }
+
+        tbody tr:nth-child(even):hover {
+            background-color: var(--bg-hover);
+        }
+
+        /* Status badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .badge-active {
+            background-color: rgba(52, 211, 153, 0.15);
+            color: var(--green);
+        }
+
+        .badge-suspended {
+            background-color: rgba(248, 113, 113, 0.15);
+            color: var(--red);
+        }
+
+        .badge-user {
+            background-color: rgba(79, 125, 249, 0.15);
+            color: var(--accent);
+        }
+
+        .badge-admin {
+            background-color: rgba(251, 191, 36, 0.15);
+            color: var(--amber);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--text-bright);
+        }
+
+        .btn-primary:hover {
+            background-color: #3d5ae8;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-hover);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background-color: #2a2e3a;
+        }
+
+        .btn-small {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* Search and filters */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-input, .filter-select {
+            padding: 10px 12px;
+            background-color: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .search-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            background-color: var(--bg);
+        }
+
+        .filter-select {
+            cursor: pointer;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .form-checkbox input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        .form-checkbox label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 28px;
+        }
+
+        /* Loading and empty states */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            color: var(--text-dim);
+        }
+
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 24px;
+            padding: 0 24px 24px 24px;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            background-color: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .pagination button:hover {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: var(--text-bright);
+        }
+
+        .pagination button.active {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: var(--text-bright);
+        }
+
+        /* Settings placeholder */
+        .settings-coming-soon {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .settings-coming-soon h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .settings-config {
+            background-color: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 16px;
+            text-align: left;
+            margin-top: 24px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+
+            th, td {
+                padding: 10px 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 16px;
+                flex-direction: row;
+                align-items: center;
+                height: auto;
+            }
+
+            .sidebar-brand {
+                margin-bottom: 0;
+                margin-right: 24px;
+            }
+
+            .sidebar-nav {
+                display: flex;
+                gap: 0;
+                margin-bottom: 0;
+                flex: 1;
+            }
+
+            .sidebar-nav a {
+                margin-bottom: 0;
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .sidebar-footer {
+                border-top: none;
+                border-left: 1px solid var(--border);
+                padding-top: 0;
+                padding-left: 16px;
+                margin-left: auto;
+                display: flex;
+                gap: 0;
+            }
+
+            .sidebar-footer a {
+                margin-bottom: 0;
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .sidebar-current-user {
+                display: none;
+            }
+
+            .content-area {
+                padding: 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+
+            .chart-bars {
+                height: 150px;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+            }
+
+            .search-input, .filter-select {
+                width: 100%;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-brand">TIFP Admin</div>
+            <div class="sidebar-current-user" id="currentUser">Loading...</div>
+            <div class="sidebar-nav">
+                <a onclick="showPage('overview')" class="nav-link active" data-page="overview">Overview</a>
+                <a onclick="showPage('users')" class="nav-link" data-page="users">Users</a>
+                <a onclick="showPage('activity')" class="nav-link" data-page="activity">Activity</a>
+                <a onclick="showPage('settings')" class="nav-link" data-page="settings">Settings</a>
+            </div>
+            <div class="sidebar-footer">
+                <a onclick="goBackToApp()">Back to App</a>
+                <a class="logout" onclick="logout()">Log Out</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1 id="pageTitle">Overview</h1>
+            </div>
+
+            <div class="content-area">
+                <!-- Overview Page -->
+                <div class="page active" id="page-overview">
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-value" id="stat-total-users">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Active Users</div>
+                            <div class="stat-value" id="stat-active-users">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Admins</div>
+                            <div class="stat-value" id="stat-admins">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Suspended</div>
+                            <div class="stat-value" id="stat-suspended">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Active Sessions</div>
+                            <div class="stat-value" id="stat-sessions">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Uploads</div>
+                            <div class="stat-value" id="stat-uploads">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Products</div>
+                            <div class="stat-value" id="stat-products">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Searches</div>
+                            <div class="stat-value" id="stat-searches">0</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-title">Registrations (30 days)</div>
+                        <div class="chart-bars" id="registrationChart">
+                            <div class="chart-bar-group">
+                                <div class="chart-bar" style="height: 0%;"></div>
+                                <div class="chart-label">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <div class="table-title">Top Users by Activity</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Uploads</th>
+                                    <th>Searches</th>
+                                    <th>Last Login</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topUsersTable">
+                                <tr>
+                                    <td colspan="6" class="loading">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <div class="table-title">Recent Activity (Last 20)</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentActivityTable">
+                                <tr>
+                                    <td colspan="4" class="loading">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Users Page -->
+                <div class="page" id="page-users">
+                    <div class="table-container">
+                        <div class="table-header">
+                            <div class="table-title">Users</div>
+                        </div>
+
+                        <div style="padding: 16px 24px;">
+                            <div class="filter-bar">
+                                <input type="text" class="search-input" id="userSearch" placeholder="Search by email or name...">
+                                <select class="filter-select" id="roleFilter">
+                                    <option value="">All Roles</option>
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                                <select class="filter-select" id="statusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="suspended">Suspended</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Display Name</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Uploads</th>
+                                    <th>Searches</th>
+                                    <th>Created</th>
+                                    <th>Last Login</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable">
+                                <tr>
+                                    <td colspan="9" class="loading">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="usersPagination"></div>
+                </div>
+
+                <!-- Activity Page -->
+                <div class="page" id="page-activity">
+                    <div class="table-container">
+                        <div class="table-header">
+                            <div class="table-title">Activity Log</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>User Email</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th>IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityTable">
+                                <tr>
+                                    <td colspan="5" class="loading">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="activityPagination"></div>
+
+                    <div style="margin-top: 32px;">
+                        <div class="chart-title">Activity by Type</div>
+                        <div class="stats-grid" id="activityStats"></div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div class="page" id="page-settings">
+                    <div class="settings-coming-soon">
+                        <h2>System Settings</h2>
+                        <p>System settings configuration coming soon</p>
+                        <div class="settings-config" id="configDisplay">
+                            Environment: Production<br>
+                            API Version: v1<br>
+                            Database: Connected<br>
+                            Cache: Redis
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal" id="editUserModal">
+        <div class="modal-content">
+            <div class="modal-header">Edit User</div>
+            <form id="editUserForm">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <div style="padding: 10px 12px; background-color: var(--bg-hover); border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim);">
+                        <span id="editUserEmail"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Display Name</label>
+                    <input type="text" class="form-input" id="editUserDisplayName">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <select class="form-select" id="editUserRole">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="editUserActive">
+                        <label for="editUserActive" style="margin: 0;">Active</label>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="editUserSuspended">
+                        <label for="editUserSuspended" style="margin: 0;">Suspended</label>
+                    </label>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentAdminEmail = '';
+        let allUsers = [];
+        let allActivity = [];
+        let currentUsersPage = 1;
+        let currentActivityPage = 1;
+        const ITEMS_PER_PAGE = 20;
+        let editingUserId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCurrentAdmin();
+            await showPage('overview');
+        });
+
+        // Load current admin user
+        async function loadCurrentAdmin() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                currentAdminEmail = data.email;
+                document.getElementById('currentUser').textContent = data.email;
+            } catch (error) {
+                console.error('Failed to load current admin:', error);
+                document.getElementById('currentUser').textContent = 'Admin User';
+            }
+        }
+
+        // Page navigation
+        function showPage(pageName) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // Update active nav
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
+
+            // Show selected page
+            document.getElementById(`page-${pageName}`).classList.add('active');
+
+            // Update title
+            const titles = {
+                overview: 'Overview',
+                users: 'Users',
+                activity: 'Activity',
+                settings: 'Settings'
+            };
+            document.getElementById('pageTitle').textContent = titles[pageName];
+
+            // Load page data
+            if (pageName === 'overview') {
+                loadOverviewData();
+            } else if (pageName === 'users') {
+                loadUsersData();
+            } else if (pageName === 'activity') {
+                loadActivityData();
+            }
+        }
+
+        // Overview page
+        async function loadOverviewData() {
+            try {
+                const response = await fetch('/api/admin/analytics', {
+                    credentials: 'include'
+                });
+                const data = response.json ? await response.json() : JSON.parse(response);
+
+                // Update stats
+                document.getElementById('stat-total-users').textContent = data.stats?.totalUsers || 0;
+                document.getElementById('stat-active-users').textContent = data.stats?.activeUsers || 0;
+                document.getElementById('stat-admins').textContent = data.stats?.adminCount || 0;
+                document.getElementById('stat-suspended').textContent = data.stats?.suspendedCount || 0;
+                document.getElementById('stat-sessions').textContent = data.stats?.activeSessions || 0;
+                document.getElementById('stat-uploads').textContent = data.stats?.totalUploads || 0;
+                document.getElementById('stat-products').textContent = data.stats?.totalProducts || 0;
+                document.getElementById('stat-searches').textContent = data.stats?.totalSearches || 0;
+
+                // Update registration chart
+                if (data.registrationChart && data.registrationChart.length > 0) {
+                    const maxValue = Math.max(...data.registrationChart.map(d => d.count));
+                    let html = '';
+                    data.registrationChart.forEach(day => {
+                        const percentage = maxValue > 0 ? (day.count / maxValue) * 100 : 0;
+                        html += `
+                            <div class="chart-bar-group">
+                                <div class="chart-bar" style="height: ${percentage}%;"></div>
+                                <div class="chart-label">${day.date}</div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('registrationChart').innerHTML = html;
+                }
+
+                // Update top users
+                if (data.topUsers && data.topUsers.length > 0) {
+                    let html = '';
+                    data.topUsers.forEach(user => {
+                        const lastLogin = user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never';
+                        html += `
+                            <tr>
+                                <td>${escapeHtml(user.email)}</td>
+                                <td><span class="badge ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">${user.role}</span></td>
+                                <td>${user.uploadCount || 0}</td>
+                                <td>${user.searchCount || 0}</td>
+                                <td>${lastLogin}</td>
+                                <td>
+                                    <button class="btn btn-secondary btn-small" onclick="editUserFromTopList('${user.id}', '${escapeHtml(user.email)}')">Edit</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    document.getElementById('topUsersTable').innerHTML = html;
+                }
+
+                // Update recent activity
+                if (data.recentActivity && data.recentActivity.length > 0) {
+                    let html = '';
+                    data.recentActivity.forEach(activity => {
+                        const time = new Date(activity.timestamp).toLocaleString();
+                        html += `
+                            <tr>
+                                <td>${time}</td>
+                                <td>${escapeHtml(activity.userEmail)}</td>
+                                <td>${escapeHtml(activity.action)}</td>
+                                <td>${escapeHtml(activity.details || '')}</td>
+                            </tr>
+                        `;
+                    });
+                    document.getElementById('recentActivityTable').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Failed to load overview data:', error);
+            }
+        }
+
+        // Users page
+        async function loadUsersData() {
+            try {
+                const response = await fetch('/api/admin/users', {
+                    credentials: 'include'
+                });
+                allUsers = response.json ? await response.json() : JSON.parse(response);
+                if (!Array.isArray(allUsers)) {
+                    allUsers = [];
+                }
+                filterAndDisplayUsers();
+            } catch (error) {
+                console.error('Failed to load users:', error);
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load users</td></tr>';
+            }
+        }
+
+        function filterAndDisplayUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            let filtered = allUsers.filter(user => {
+                const matchesSearch = user.email.toLowerCase().includes(searchTerm) ||
+                                    (user.displayName && user.displayName.toLowerCase().includes(searchTerm));
+                const matchesRole = !roleFilter || user.role === roleFilter;
+                const matchesStatus = !statusFilter ||
+                                    (statusFilter === 'active' && !user.suspended) ||
+                                    (statusFilter === 'suspended' && user.suspended);
+                return matchesSearch && matchesRole && matchesStatus;
+            });
+
+            // Pagination
+            const total = filtered.length;
+            const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+            if (currentUsersPage > totalPages) {
+                currentUsersPage = 1;
+            }
+
+            const start = (currentUsersPage - 1) * ITEMS_PER_PAGE;
+            const paged = filtered.slice(start, start + ITEMS_PER_PAGE);
+
+            // Display users
+            let html = '';
+            if (paged.length === 0) {
+                html = '<tr><td colspan="9" class="empty-state">No users found</td></tr>';
+            } else {
+                paged.forEach(user => {
+                    const created = new Date(user.createdAt).toLocaleDateString();
+                    const lastLogin = user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never';
+                    const statusBadge = user.suspended ? 'suspended' : 'active';
+                    const statusText = user.suspended ? 'Suspended' : 'Active';
+                    html += `
+                        <tr>
+                            <td>${escapeHtml(user.email)}</td>
+                            <td>${escapeHtml(user.displayName || '')}</td>
+                            <td><span class="badge ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">${user.role}</span></td>
+                            <td><span class="badge badge-${statusBadge}">${statusText}</span></td>
+                            <td>${user.uploadCount || 0}</td>
+                            <td>${user.searchCount || 0}</td>
+                            <td>${created}</td>
+                            <td>${lastLogin}</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" onclick="openEditUserModal('${user.id}', '${escapeHtml(user.email)}', '${escapeHtml(user.displayName || '')}', '${user.role}', ${!user.suspended}, ${user.suspended})">Edit</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('usersTable').innerHTML = html;
+
+            // Pagination controls
+            let paginationHtml = '';
+            if (totalPages > 1) {
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHtml += `<button class="btn btn-secondary ${i === currentUsersPage ? 'active' : ''}" onclick="setUsersPage(${i})">${i}</button>`;
+                }
+            }
+            document.getElementById('usersPagination').innerHTML = paginationHtml;
+        }
+
+        // Edit user modal
+        function openEditUserModal(userId, email, displayName, role, active, suspended) {
+            editingUserId = userId;
+            document.getElementById('editUserEmail').textContent = email;
+            document.getElementById('editUserDisplayName').value = displayName;
+            document.getElementById('editUserRole').value = role;
+            document.getElementById('editUserActive').checked = active;
+            document.getElementById('editUserSuspended').checked = suspended;
+            document.getElementById('editUserModal').classList.add('active');
+        }
+
+        function editUserFromTopList(userId, email) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+                openEditUserModal(userId, email, user.displayName || '', user.role, !user.suspended, user.suspended);
+            }
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').classList.remove('active');
+            editingUserId = null;
+        }
+
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                displayName: document.getElementById('editUserDisplayName').value,
+                role: document.getElementById('editUserRole').value,
+                suspended: document.getElementById('editUserSuspended').checked
+            };
+
+            try {
+                const response = await fetch(`/api/admin/users/${editingUserId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeEditUserModal();
+                    loadUsersData();
+                } else {
+                    alert('Failed to update user');
+                }
+            } catch (error) {
+                console.error('Failed to update user:', error);
+                alert('Failed to update user');
+            }
+        });
+
+        // Filter event listeners
+        document.getElementById('userSearch').addEventListener('input', () => {
+            currentUsersPage = 1;
+            filterAndDisplayUsers();
+        });
+
+        document.getElementById('roleFilter').addEventListener('change', () => {
+            currentUsersPage = 1;
+            filterAndDisplayUsers();
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', () => {
+            currentUsersPage = 1;
+            filterAndDisplayUsers();
+        });
+
+        function setUsersPage(page) {
+            currentUsersPage = page;
+            filterAndDisplayUsers();
+        }
+
+        // Activity page
+        async function loadActivityData() {
+            try {
+                const response = await fetch('/api/admin/activity', {
+                    credentials: 'include'
+                });
+                const data = response.json ? await response.json() : JSON.parse(response);
+                allActivity = data.activity || data || [];
+                if (!Array.isArray(allActivity)) {
+                    allActivity = [];
+                }
+                displayActivity();
+                updateActivityStats();
+            } catch (error) {
+                console.error('Failed to load activity data:', error);
+                document.getElementById('activityTable').innerHTML = '<tr><td colspan="5" class="empty-state">Failed to load activity</td></tr>';
+            }
+        }
+
+        function displayActivity() {
+            const total = allActivity.length;
+            const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+            if (currentActivityPage > totalPages) {
+                currentActivityPage = 1;
+            }
+
+            const start = (currentActivityPage - 1) * ITEMS_PER_PAGE;
+            const paged = allActivity.slice(start, start + ITEMS_PER_PAGE);
+
+            let html = '';
+            if (paged.length === 0) {
+                html = '<tr><td colspan="5" class="empty-state">No activity found</td></tr>';
+            } else {
+                paged.forEach(activity => {
+                    const time = new Date(activity.timestamp).toLocaleString();
+                    html += `
+                        <tr>
+                            <td>${time}</td>
+                            <td>${escapeHtml(activity.userEmail)}</td>
+                            <td>${escapeHtml(activity.action)}</td>
+                            <td>${escapeHtml(activity.details || '')}</td>
+                            <td>${escapeHtml(activity.ipAddress || '')}</td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('activityTable').innerHTML = html;
+
+            // Pagination
+            let paginationHtml = '';
+            if (totalPages > 1) {
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHtml += `<button class="btn btn-secondary ${i === currentActivityPage ? 'active' : ''}" onclick="setActivityPage(${i})">${i}</button>`;
+                }
+            }
+            document.getElementById('activityPagination').innerHTML = paginationHtml;
+        }
+
+        function setActivityPage(page) {
+            currentActivityPage = page;
+            displayActivity();
+        }
+
+        function updateActivityStats() {
+            const actionCounts = {};
+            allActivity.forEach(activity => {
+                const action = activity.action;
+                actionCounts[action] = (actionCounts[action] || 0) + 1;
+            });
+
+            let html = '';
+            Object.entries(actionCounts).forEach(([action, count]) => {
+                html += `
+                    <div class="stat-card">
+                        <div class="stat-label">${escapeHtml(action)}</div>
+                        <div class="stat-value">${count}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('activityStats').innerHTML = html || '<p class="text-dim">No activity data</p>';
+        }
+
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function goBackToApp() {
+            window.location.href = '/';
+        }
+
+        function logout() {
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }).then(() => {
+                window.location.href = '/login';
+            }).catch(() => {
+                window.location.href = '/login';
+            });
+        }
+
+        // Close modal on outside click
+        document.getElementById('editUserModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editUserModal') {
+                closeEditUserModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# TIFP Mill Lists — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# ── Web Server ──────────────────────────────────────────
+tornado==6.4.2
+
+# ── PDF Parsing ─────────────────────────────────────────
+pdfplumber==0.11.4           # Text-based PDF extraction
+pdf2image==1.17.0            # Converts scanned PDFs to images for OCR
+# NOTE: pdf2image requires poppler (install separately — see setup below)
+
+# ── OCR (for scanned/image PDFs like CC Cook) ───────────
+# pytesseract is the Python wrapper; tesseract binary must also be installed
+pytesseract==0.3.13
+# NOTE: tesseract binary required (install separately — see setup below)
+
+# ── Excel / CSV Parsing ──────────────────────────────────
+openpyxl==3.1.5
+pandas==2.2.3
+
+# ── Authentication ──────────────────────────────────────
+bcrypt==4.2.1                # Password hashing
+
+# ── Utilities ────────────────────────────────────────────
+Pillow==11.1.0               # Image handling (used by pdf2image)
