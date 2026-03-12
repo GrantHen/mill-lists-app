@@ -671,6 +671,7 @@
                 <a onclick="showPage('overview')" class="nav-link active" data-page="overview">Overview</a>
                 <a onclick="showPage('users')" class="nav-link" data-page="users">Users</a>
                 <a onclick="showPage('activity')" class="nav-link" data-page="activity">Activity</a>
+                <a onclick="showPage('groups')" class="nav-link" data-page="groups">Groups</a>
                 <a onclick="showPage('settings')" class="nav-link" data-page="settings">Settings</a>
             </div>
             <div class="sidebar-footer">
@@ -857,6 +858,48 @@
                     </div>
                 </div>
 
+                <!-- Groups Page -->
+                <div class="page" id="page-groups">
+                    <div class="stats-grid" id="groupStatsGrid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Groups</div>
+                            <div class="stat-value" id="stat-total-groups">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Members</div>
+                            <div class="stat-value" id="stat-total-members">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Uploads</div>
+                            <div class="stat-value" id="stat-group-uploads">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Products</div>
+                            <div class="stat-value" id="stat-group-products">0</div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <div class="table-header">
+                            <div class="table-title">All Workspaces</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Members</th>
+                                    <th>Uploads</th>
+                                    <th>Products</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody id="groupsTable">
+                                <tr><td colspan="6" class="loading">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Settings Page -->
                 <div class="page" id="page-settings">
                     <div class="settings-coming-soon">
@@ -973,6 +1016,7 @@
                 overview: 'Overview',
                 users: 'Users',
                 activity: 'Activity',
+                groups: 'Groups',
                 settings: 'Settings'
             };
             document.getElementById('pageTitle').textContent = titles[pageName];
@@ -984,6 +1028,8 @@
                 loadUsersData();
             } else if (pageName === 'activity') {
                 loadActivityData();
+            } else if (pageName === 'groups') {
+                loadGroupsData();
             }
         }
 
@@ -1300,6 +1346,49 @@
                 `;
             });
             document.getElementById('activityStats').innerHTML = html || '<p class="text-dim">No activity data</p>';
+        }
+
+        // Groups page
+        async function loadGroupsData() {
+            try {
+                const response = await fetch('/api/admin/groups', { credentials: 'include' });
+                const data = await response.json();
+                const groups = data.groups || [];
+
+                // Update stats
+                let totalMembers = 0, totalUploads = 0, totalProducts = 0;
+                groups.forEach(g => {
+                    totalMembers += g.member_count || 0;
+                    totalUploads += g.upload_count || 0;
+                    totalProducts += g.product_count || 0;
+                });
+                document.getElementById('stat-total-groups').textContent = groups.length;
+                document.getElementById('stat-total-members').textContent = totalMembers;
+                document.getElementById('stat-group-uploads').textContent = totalUploads;
+                document.getElementById('stat-group-products').textContent = totalProducts;
+
+                // Render table
+                if (groups.length === 0) {
+                    document.getElementById('groupsTable').innerHTML = '<tr><td colspan="6" class="empty-state">No groups yet</td></tr>';
+                    return;
+                }
+                let html = '';
+                groups.forEach(g => {
+                    const created = new Date(g.created_at).toLocaleDateString();
+                    html += `<tr>
+                        <td><strong>${escapeHtml(g.name)}</strong></td>
+                        <td>${escapeHtml(g.description || '')}</td>
+                        <td>${g.member_count || 0}</td>
+                        <td>${g.upload_count || 0}</td>
+                        <td>${g.product_count || 0}</td>
+                        <td>${created}</td>
+                    </tr>`;
+                });
+                document.getElementById('groupsTable').innerHTML = html;
+            } catch (error) {
+                console.error('Failed to load groups:', error);
+                document.getElementById('groupsTable').innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load groups</td></tr>';
+            }
         }
 
         // Utility functions

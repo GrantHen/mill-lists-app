@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groups - Mill Lists</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0f1117;
+      --bg-card: #1a1d27;
+      --bg-hover: #222633;
+      --bg-input: #151820;
+      --border: #2a2e3a;
+      --border-focus: #4f7df9;
+      --text: #e4e6ed;
+      --text-dim: #8b8fa3;
+      --text-bright: #ffffff;
+      --accent: #4f7df9;
+      --accent-soft: rgba(79,125,249,0.12);
+      --green: #34d399;
+      --green-soft: rgba(52,211,153,0.12);
+      --amber: #fbbf24;
+      --amber-soft: rgba(251,191,36,0.12);
+      --red: #f87171;
+      --red-soft: rgba(248,113,113,0.12);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.3);
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      flex: 1;
+      overflow: auto;
+      padding: 32px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      border: none;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #3d63db;
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-focus);
+    }
+
+    .btn-secondary.sm {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .btn-ghost {
+      background: none;
+      color: var(--accent);
+      border: none;
+      padding: 8px;
+    }
+
+    .btn-ghost:hover {
+      background: var(--accent-soft);
+    }
+
+    .btn-danger {
+      background: var(--red-soft);
+      color: var(--red);
+      border: 1px solid var(--red);
+    }
+
+    .btn-danger:hover {
+      background: rgba(248,113,113,0.2);
+    }
+
+    /* Groups List */
+    .groups-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .group-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: all 0.2s;
+    }
+
+    .group-card:hover {
+      border-color: var(--border-focus);
+      box-shadow: var(--shadow);
+    }
+
+    .group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .group-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .role-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .role-badge.owner {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .role-badge.admin {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .role-badge.member {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .group-description {
+      color: var(--text-dim);
+      font-size: 13px;
+      margin-bottom: 16px;
+      min-height: 36px;
+    }
+
+    .group-meta {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-dim);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    .group-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .group-actions .btn {
+      flex: 1;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-dim);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state h2 {
+      color: var(--text);
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      margin-bottom: 24px;
+    }
+
+    /* Invitations Section */
+    .invitations-section {
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 20px;
+    }
+
+    .invitations-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .invitation-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .invitation-info {
+      flex: 1;
+    }
+
+    .invitation-group {
+      font-weight: 500;
+      color: var(--text-bright);
+      margin-bottom: 4px;
+    }
+
+    .invitation-from {
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    .invitation-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Detail View */
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      border-color: var(--border-focus);
+    }
+
+    .detail-info h1 {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .detail-info p {
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 12px 0;
+      border-bottom: 2px solid transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      border-bottom-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tab:hover {
+      color: var(--text);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Dashboard */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    .activity-feed {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 16px;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+
+    .activity-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-text {
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .activity-time {
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    /* Members Table */
+    .table-wrapper {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table thead {
+      background: var(--bg-hover);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table th {
+      padding: 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-bright);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table tbody tr:hover {
+      background: var(--bg-hover);
+    }
+
+    .role-select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-family: var(--font);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .role-select:focus {
+      outline: none;
+      border-color: var(--border-focus);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-header {
+      margin-bottom: 24px;
+    }
+
+    .modal-header h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .modal-body {
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--border-focus);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    /* Invite Link Display */
+    .invite-link-box {
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .invite-link-text {
+      flex: 1;
+      color: var(--text);
+      word-break: break-all;
+      font-size: 13px;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+
+    .copy-btn {
+      padding: 6px 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: #3d63db;
+    }
+
+    /* Settings Form */
+    .settings-form {
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+
+    .danger-zone {
+      background: var(--red-soft);
+      border: 1px solid var(--red);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-top: 40px;
+    }
+
+    .danger-zone h3 {
+      color: var(--red);
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+
+    .danger-zone p {
+      color: var(--text-dim);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      color: var(--text);
+      font-size: 14px;
+      box-shadow: var(--shadow);
+      z-index: 2000;
+      animation: slideIn 0.3s ease-out;
+      max-width: 400px;
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--green);
+      color: var(--text);
+    }
+
+    .toast.error {
+      border-left: 4px solid var(--red);
+      color: var(--text);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Loading State */
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px 16px;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .groups-list {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table {
+        font-size: 12px;
+      }
+
+      .table th,
+      .table td {
+        padding: 12px 8px;
+      }
+
+      .modal {
+        width: 95%;
+        padding: 20px;
+      }
+
+      .toast {
+        right: 12px;
+        left: 12px;
+        max-width: none;
+      }
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-badge.pending {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .status-badge.accepted {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .status-badge.expired {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .status-badge.revoked {
+      background: transparent;
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Groups View -->
+    <div id="groupsView">
+      <div class="header">
+        <h1>Groups</h1>
+        <button class="btn btn-primary" onclick="app.showCreateModal()">
+          <span>+</span>
+          <span>Create Group</span>
+        </button>
+      </div>
+
+      <div id="groupsContainer"></div>
+
+      <div id="invitationsSection" class="invitations-section" style="display: none;">
+        <h2 class="section-title">Pending Invitations</h2>
+        <div id="invitationsList" class="invitations-list"></div>
+      </div>
+    </div>
+
+    <!-- Detail View -->
+    <div id="detailView" style="display: none;">
+      <div class="detail-header">
+        <button class="back-btn" onclick="app.backToGroups()" title="Back to groups">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div class="detail-info">
+          <h1 id="detailTitle"></h1>
+          <p id="detailDescription"></p>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="app.switchTab('dashboard')">Dashboard</div>
+        <div class="tab" onclick="app.switchTab('members')">Members</div>
+        <div class="tab" onclick="app.switchTab('invitations')">Invitations</div>
+        <div class="tab" onclick="app.switchTab('settings')">Settings</div>
+      </div>
+
+      <!-- Dashboard Tab -->
+      <div id="dashboardTab" class="tab-content active">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="statMembers">0</div>
+            <div class="stat-label">Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statUploads">0</div>
+            <div class="stat-label">Uploads</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statProducts">0</div>
+            <div class="stat-label">Products</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statMills">0</div>
+            <div class="stat-label">Mills</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statSearches">0</div>
+            <div class="stat-label">Searches</div>
+          </div>
+        </div>
+
+        <div class="activity-feed">
+          <h3 style="font-size: 16px; color: var(--text-bright); margin-bottom: 20px;">Recent Activity</h3>
+          <div id="activityFeed"></div>
+        </div>
+      </div>
+
+      <!-- Members Tab -->
+      <div id="membersTab" class="tab-content">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th style="width: 60px; text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="membersList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Invitations Tab -->
+      <div id="invitationsTab" class="tab-content">
+        <button class="btn btn-primary" onclick="app.showInviteModal()" style="margin-bottom: 24px;">
+          <span>+</span>
+          <span>Invite Member</span>
+        </button>
+
+        <div id="inviteLinkSection" style="display: none;">
+          <div class="invite-link-box">
+            <div class="invite-link-text" id="inviteLinkText"></div>
+            <button class="copy-btn" onclick="app.copyInviteLink()">Copy</button>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Sent</th>
+                <th>Expires</th>
+                <th style="width: 60px; text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="invitationsList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="settingsTab" class="tab-content">
+        <form class="settings-form" onsubmit="app.saveGroupSettings(event)">
+          <div class="form-group">
+            <label for="settingsName">Group Name</label>
+            <input type="text" id="settingsName" required>
+          </div>
+          <div class="form-group">
+            <label for="settingsDescription">Description</label>
+            <textarea id="settingsDescription"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+
+        <div class="danger-zone" id="dangerZone" style="display: none;">
+          <h3>Danger Zone</h3>
+          <p>Once you delete a group, there is no going back. Please be certain.</p>
+          <button type="button" class="btn btn-danger" onclick="app.deleteGroup()">
+            <span>🗑</span>
+            <span>Delete Group</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Group Modal -->
+  <div id="createModal" class="modal-overlay" onclick="app.closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Create New Group</h2>
+      </div>
+      <form class="modal-body" onsubmit="app.createGroup(event)">
+        <div class="form-group">
+          <label for="createName">Group Name *</label>
+          <input type="text" id="createName" required>
+        </div>
+        <div class="form-group">
+          <label for="createDescription">Description</label>
+          <textarea id="createDescription"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Group</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Invite Member Modal -->
+  <div id="inviteModal" class="modal-overlay" onclick="app.closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Invite Member</h2>
+      </div>
+      <form class="modal-body" onsubmit="app.sendInvite(event)">
+        <div class="form-group">
+          <label for="inviteEmail">Email Address *</label>
+          <input type="email" id="inviteEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="inviteRole">Role</label>
+          <select id="inviteRole">
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Send Invitation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // API Helper
+    async function api(path, opts = {}) {
+      const res = await fetch('/api/' + path, {
+        headers: { 'Content-Type': 'application/json', ...opts.headers },
+        ...opts
+      });
+      if (res.status === 401) {
+        window.location.href = '/auth#login';
+        return {};
+      }
+      return res.json();
+    }
+
+    // Toast Notification
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Format Date
+    function formatDate(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function formatTime(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    // Main App
+    const app = {
+      currentGroup: null,
+      currentUser: null,
+      groups: [],
+      pendingInvites: [],
+
+      async init() {
+        await this.fetchCurrentUser();
+        await this.loadGroups();
+        await this.loadPendingInvites();
+      },
+
+      async fetchCurrentUser() {
+        const data = await api('auth/me');
+        this.currentUser = data.user || {};
+      },
+
+      async loadGroups() {
+        const data = await api('groups');
+        this.groups = data.groups || [];
+        this.renderGroups();
+      },
+
+      async loadPendingInvites() {
+        const data = await api('invitations/pending');
+        this.pendingInvites = data.invitations || [];
+        this.renderPendingInvites();
+      },
+
+      renderGroups() {
+        const container = document.getElementById('groupsContainer');
+
+        if (this.groups.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📋</div>
+              <h2>No groups yet</h2>
+              <p>Create your first group to get started collaborating with your team.</p>
+              <button class="btn btn-primary" onclick="app.showCreateModal()">Create your first group</button>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="groups-list">
+            ${this.groups.map(group => `
+              <div class="group-card">
+                <div class="group-header">
+                  <div class="group-name">${escapeHtml(group.name)}</div>
+                  <div class="role-badge ${group.userRole}">${escapeHtml(group.userRole)}</div>
+                </div>
+                <div class="group-description">${escapeHtml(group.description || '')}</div>
+                <div class="group-meta">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  <span>${group.memberCount || 0} member${(group.memberCount || 0) !== 1 ? 's' : ''}</span>
+                </div>
+                <div class="group-actions">
+                  <button class="btn btn-secondary btn-sm" onclick="app.openGroup('${escapeHtml(group.id)}')">Open</button>
+                  ${(group.userRole === 'owner' || group.userRole === 'admin') ?
+                    `<button class="btn btn-secondary btn-sm" onclick="app.manageGroup('${escapeHtml(group.id)}')">Manage</button>` :
+                    ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      },
+
+      renderPendingInvites() {
+        const section = document.getElementById('invitationsSection');
+        const list = document.getElementById('invitationsList');
+
+        if (this.pendingInvites.length === 0) {
+          section.style.display = 'none';
+          return;
+        }
+
+        section.style.display = 'block';
+        list.innerHTML = this.pendingInvites.map(invite => `
+          <div class="invitation-card">
+            <div class="invitation-info">
+              <div class="invitation-group">${escapeHtml(invite.groupName)}</div>
+              <div class="invitation-from">Invited by ${escapeHtml(invite.invitedBy)}</div>
+            </div>
+            <div class="invitation-actions">
+              <button class="btn btn-secondary btn-sm" onclick="app.acceptInvite('${escapeHtml(invite.token)}')">Accept</button>
+              <button class="btn btn-secondary btn-sm" onclick="app.declineInvite('${escapeHtml(invite.token)}')">Decline</button>
+            </div>
+          </div>
+        `).join('');
+      },
+
+      async openGroup(groupId) {
+        window.location.href = `/app?group=${groupId}`;
+      },
+
+      async manageGroup(groupId) {
+        this.currentGroup = this.groups.find(g => g.id === groupId);
+        if (!this.currentGroup) return;
+
+        await this.loadGroupDetail(groupId);
+        document.getElementById('groupsView').style.display = 'none';
+        document.getElementById('detailView').style.display = 'block';
+      },
+
+      async loadGroupDetail(groupId) {
+        const data = await api(`groups/${groupId}`);
+        this.currentGroup = data.group || this.currentGroup;
+
+        const data2 = await api(`groups/${groupId}/analytics`);
+        const analytics = data2.analytics || {};
+
+        const data3 = await api(`groups/${groupId}/members`);
+        const members = data3.members || [];
+
+        const data4 = await api(`groups/${groupId}/invitations`);
+        const invitations = data4.invitations || [];
+
+        this.renderDetailView(members, invitations, analytics);
+      },
+
+      renderDetailView(members, invitations, analytics) {
+        document.getElementById('detailTitle').textContent = escapeHtml(this.currentGroup.name);
+        document.getElementById('detailDescription').textContent = escapeHtml(this.currentGroup.description || '');
+
+        // Update stats
+        document.getElementById('statMembers').textContent = analytics.memberCount || 0;
+        document.getElementById('statUploads').textContent = analytics.uploadCount || 0;
+        document.getElementById('statProducts').textContent = analytics.productCount || 0;
+        document.getElementById('statMills').textContent = analytics.millCount || 0;
+        document.getElementById('statSearches').textContent = analytics.searchCount || 0;
+
+        // Activity Feed
+        const activity = analytics.recentActivity || [];
+        const activityHtml = activity.length > 0
+          ? activity.map(item => `
+              <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div class="activity-content">
+                  <div class="activity-text">
+                    <strong>${escapeHtml(item.user)}</strong> ${escapeHtml(item.action)}
+                  </div>
+                  <div class="activity-time">${formatTime(item.timestamp)}</div>
+                </div>
+              </div>
+            `).join('')
+          : '<p style="color: var(--text-dim);">No recent activity</p>';
+        document.getElementById('activityFeed').innerHTML = activityHtml;
+
+        // Members Table
+        const isOwner = this.currentGroup.userRole === 'owner';
+        const isAdmin = this.currentGroup.userRole === 'admin';
+        document.getElementById('membersList').innerHTML = members.map(member => `
+          <tr>
+            <td>${escapeHtml(member.name)}</td>
+            <td style="color: var(--text-dim);">${escapeHtml(member.email)}</td>
+            <td>
+              ${isOwner ? `
+                <select class="role-select" onchange="app.updateMemberRole('${escapeHtml(member.id)}', this.value)">
+                  <option value="member" ${member.role === 'member' ? 'selected' : ''}>Member</option>
+                  <option value="admin" ${member.role === 'admin' ? 'selected' : ''}>Admin</option>
+                  ${isOwner ? `<option value="owner" ${member.role === 'owner' ? 'selected' : ''}>Owner</option>` : ''}
+                </select>
+              ` : `<span class="role-badge ${member.role}">${escapeHtml(member.role)}</span>`}
+            </td>
+            <td style="color: var(--text-dim); font-size: 13px;">${formatDate(member.joinedAt)}</td>
+            <td style="text-align: center;">
+              ${!isOwner || member.role !== 'owner' ? `
+                <button class="btn btn-ghost" onclick="app.removeMember('${escapeHtml(member.id)}')" title="Remove member">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+              ` : '<span style="color: var(--text-dim);">Owner</span>'}
+            </td>
+          </tr>
+        `).join('');
+
+        // Invitations Table
+        document.getElementById('invitationsList').innerHTML = invitations.map(inv => `
+          <tr>
+            <td>${escapeHtml(inv.email)}</td>
+            <td><span class="role-badge ${inv.role}">${escapeHtml(inv.role)}</span></td>
+            <td><span class="status-badge ${inv.status}">${escapeHtml(inv.status)}</span></td>
+            <td style="color: var(--text-dim); font-size: 13px;">${formatDate(inv.createdAt)}</td>
+            <td style="color: var(--text-dim); font-size: 13px;">${formatDate(inv.expiresAt)}</td>
+            <td style="text-align: center;">
+              ${inv.status === 'pending' ? `
+                <button class="btn btn-ghost" onclick="app.revokeInvite('${escapeHtml(inv.id)}')" title="Revoke invitation">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              ` : '-'}
+            </td>
+          </tr>
+        `).join('');
+
+        // Settings
+        document.getElementById('settingsName').value = this.currentGroup.name;
+        document.getElementById('settingsDescription').value = this.currentGroup.description || '';
+
+        // Show danger zone only for owner
+        document.getElementById('dangerZone').style.display = isOwner ? 'block' : 'none';
+      },
+
+      switchTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+        // Show selected tab
+        event.target.classList.add('active');
+        document.getElementById(tabName + 'Tab').classList.add('active');
+      },
+
+      showCreateModal() {
+        document.getElementById('createModal').classList.add('active');
+        document.getElementById('createName').focus();
+      },
+
+      showInviteModal() {
+        document.getElementById('inviteModal').classList.add('active');
+        document.getElementById('inviteEmail').focus();
+      },
+
+      closeModal(event) {
+        if (event && event.target.id) {
+          event.target.classList.remove('active');
+        } else if (event) {
+          // Called from button
+          event.target.closest('.modal-overlay').classList.remove('active');
+        }
+        document.getElementById('createModal').classList.remove('active');
+        document.getElementById('inviteModal').classList.remove('active');
+      },
+
+      async createGroup(event) {
+        event.preventDefault();
+        const name = document.getElementById('createName').value;
+        const description = document.getElementById('createDescription').value;
+
+        const data = await api('groups', {
+          method: 'POST',
+          body: JSON.stringify({ name, description })
+        });
+
+        if (data.group) {
+          showToast('Group created successfully');
+          this.closeModal();
+          document.getElementById('createName').value = '';
+          document.getElementById('createDescription').value = '';
+          await this.loadGroups();
+        } else {
+          showToast(data.error || 'Failed to create group', 'error');
+        }
+      },
+
+      async sendInvite(event) {
+        event.preventDefault();
+        const email = document.getElementById('inviteEmail').value;
+        const role = document.getElementById('inviteRole').value;
+
+        const data = await api(`groups/${this.currentGroup.id}/invitations`, {
+          method: 'POST',
+          body: JSON.stringify({ email, role })
+        });
+
+        if (data.invitation) {
+          showToast('Invitation sent');
+          document.getElementById('inviteEmail').value = '';
+
+          // Show invite link
+          document.getElementById('inviteLinkSection').style.display = 'block';
+          document.getElementById('inviteLinkText').textContent =
+            `${window.location.origin}/invitations/${data.invitation.token}`;
+          this.closeModal();
+
+          // Reload invitations
+          await this.loadGroupDetail(this.currentGroup.id);
+        } else {
+          showToast(data.error || 'Failed to send invitation', 'error');
+        }
+      },
+
+      copyInviteLink() {
+        const text = document.getElementById('inviteLinkText').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('Invite link copied');
+        });
+      },
+
+      async updateMemberRole(memberId, role) {
+        const data = await api(`groups/${this.currentGroup.id}/members/${memberId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ role })
+        });
+
+        if (data.success) {
+          showToast('Member role updated');
+          await this.loadGroupDetail(this.currentGroup.id);
+        } else {
+          showToast(data.error || 'Failed to update role', 'error');
+        }
+      },
+
+      async removeMember(memberId) {
+        if (!confirm('Are you sure you want to remove this member?')) return;
+
+        const data = await api(`groups/${this.currentGroup.id}/members/${memberId}`, {
+          method: 'DELETE'
+        });
+
+        if (data.success) {
+          showToast('Member removed');
+          await this.loadGroupDetail(this.currentGroup.id);
+        } else {
+          showToast(data.error || 'Failed to remove member', 'error');
+        }
+      },
+
+      async revokeInvite(invitationId) {
+        if (!confirm('Are you sure you want to revoke this invitation?')) return;
+
+        const data = await api(`groups/${this.currentGroup.id}/invitations/${invitationId}`, {
+          method: 'DELETE'
+        });
+
+        if (data.success) {
+          showToast('Invitation revoked');
+          await this.loadGroupDetail(this.currentGroup.id);
+        } else {
+          showToast(data.error || 'Failed to revoke invitation', 'error');
+        }
+      },
+
+      async saveGroupSettings(event) {
+        event.preventDefault();
+        const name = document.getElementById('settingsName').value;
+        const description = document.getElementById('settingsDescription').value;
+
+        const data = await api(`groups/${this.currentGroup.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ name, description })
+        });
+
+        if (data.group) {
+          showToast('Group updated');
+          this.currentGroup = data.group;
+          await this.loadGroups();
+          this.renderDetailView([], [], {});
+        } else {
+          showToast(data.error || 'Failed to update group', 'error');
+        }
+      },
+
+      async deleteGroup() {
+        if (!confirm('Are you absolutely sure? This cannot be undone.')) return;
+
+        const data = await api(`groups/${this.currentGroup.id}`, {
+          method: 'DELETE'
+        });
+
+        if (data.success) {
+          showToast('Group deleted');
+          this.backToGroups();
+          await this.loadGroups();
+        } else {
+          showToast(data.error || 'Failed to delete group', 'error');
+        }
+      },
+
+      async acceptInvite(token) {
+        const data = await api('invitations/accept', {
+          method: 'POST',
+          body: JSON.stringify({ token })
+        });
+
+        if (data.success) {
+          showToast('Invitation accepted');
+          await this.loadGroups();
+          await this.loadPendingInvites();
+        } else {
+          showToast(data.error || 'Failed to accept invitation', 'error');
+        }
+      },
+
+      async declineInvite(token) {
+        if (!confirm('Are you sure you want to decline this invitation?')) return;
+
+        const data = await api('invitations/decline', {
+          method: 'POST',
+          body: JSON.stringify({ token })
+        });
+
+        if (data.success) {
+          showToast('Invitation declined');
+          await this.loadPendingInvites();
+        } else {
+          showToast(data.error || 'Failed to decline invitation', 'error');
+        }
+      },
+
+      backToGroups() {
+        this.currentGroup = null;
+        document.getElementById('detailView').style.display = 'none';
+        document.getElementById('groupsView').style.display = 'block';
+      }
+    };
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      app.init();
+    });
+
+    // Close modals on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        app.closeModal();
+      }
+    });
+  </script>
+</body>
+</html>

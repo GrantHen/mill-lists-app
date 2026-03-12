@@ -230,6 +230,17 @@ input, select, textarea { font-family: var(--font); }
 .text-dim { color: var(--text-dim); }
 .text-bright { color: var(--text-bright); }
 .hidden { display: none !important; }
+
+/* ─── Group Switcher ──────────────────────────────────── */
+#group-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b8fa3' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+#group-select:focus { border-color: var(--accent); outline: none; }
 </style>
 </head>
 <body>
@@ -239,6 +250,12 @@ input, select, textarea { font-family: var(--font); }
     <div class="sidebar-logo">
       <h1>TIFP</h1>
       <span>Mill Lists</span>
+    </div>
+    <!-- Group Switcher -->
+    <div id="group-switcher" style="padding:8px 16px 12px;border-bottom:1px solid var(--border);margin-bottom:8px;display:none;">
+      <label style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Workspace</label>
+      <select id="group-select" onchange="switchGroup(this.value)" style="width:100%;background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:var(--radius);font-size:13px;cursor:pointer;">
+      </select>
     </div>
     <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -264,7 +281,12 @@ input, select, textarea { font-family: var(--font); }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       <span class="nav-label">Review</span>
     </div>
-    <div class="nav-item" data-page="settings" onclick="showPage('settings')" style="margin-top:auto;">
+    <a href="/groups" class="nav-item" style="margin-top:auto;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="nav-label">Groups</span>
+      <span id="pending-invitations-badge" style="display:none;background:var(--red);color:white;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;margin-left:auto;"></span>
+    </a>
+    <div class="nav-item" data-page="settings" onclick="showPage('settings')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span class="nav-label">Settings</span>
     </div>
@@ -499,6 +521,8 @@ let inventoryOffset = 0;
 const LIMIT = 100;
 let selectedIds = new Set();
 let filterCache = null;
+let activeGroupId = null;
+let userGroups = [];
 
 // ─── Navigation ──────────────────────────────────────────
 function showPage(page) {
@@ -525,7 +549,13 @@ async function api(path, opts = {}) {
     window.location.href = '/auth#login';
     return {};
   }
-  return res.json();
+  const data = await res.json();
+  if (data.code === 'NO_GROUP') {
+    // No active group — redirect to group selection
+    window.location.href = '/groups';
+    return {};
+  }
+  return data;
 }
 
 // ─── Dashboard ───────────────────────────────────────────
@@ -1023,19 +1053,99 @@ function formatSize(bytes) { if (!bytes) return ''; if (bytes < 1024) return byt
 // ─── Auth / User Info ─────────────────────────────────────
 async function loadCurrentUser() {
   try {
-    const res = await api('auth/me');
-    if (res.user) {
+    const res = await fetch('/api/auth/me', {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.status === 401) {
+      window.location.href = '/auth#login';
+      return;
+    }
+    const data = await res.json();
+    if (data.user) {
       const el = document.getElementById('sidebar-user-email');
-      if (el) el.textContent = res.user.email;
-      if (res.user.role === 'admin') {
+      if (el) el.textContent = data.user.email;
+      if (data.user.role === 'admin') {
         const link = document.getElementById('admin-link');
         if (link) link.style.display = '';
       }
+
+      // Populate group switcher
+      userGroups = data.groups || [];
+      activeGroupId = data.active_group_id;
+      populateGroupSwitcher();
+
+      // If user has no groups, redirect to groups page to create/accept one
+      if (!userGroups.length) {
+        window.location.href = '/groups';
+        return;
+      }
+
+      // If no active group set, auto-select first one
+      if (!activeGroupId && userGroups.length > 0) {
+        await switchGroup(userGroups[0].id);
+      }
     }
+
+    // Check for pending invitations
+    loadPendingInvitationsBadge();
   } catch (e) {
-    // If 401, redirect to login
     window.location.href = '/auth#login';
   }
+}
+
+function populateGroupSwitcher() {
+  const switcher = document.getElementById('group-switcher');
+  const select = document.getElementById('group-select');
+
+  if (userGroups.length === 0) {
+    switcher.style.display = 'none';
+    return;
+  }
+
+  switcher.style.display = 'block';
+  select.innerHTML = userGroups.map(g =>
+    `<option value="${g.id}" ${g.id === activeGroupId ? 'selected' : ''}>${esc(g.name)}</option>`
+  ).join('');
+}
+
+async function switchGroup(groupId) {
+  groupId = parseInt(groupId);
+  if (!groupId || groupId === activeGroupId) return;
+
+  try {
+    const res = await fetch('/api/groups/switch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ group_id: groupId })
+    });
+    const data = await res.json();
+    if (data.success) {
+      activeGroupId = groupId;
+      filterCache = null; // reset filter cache for new group
+      // Reload current page data
+      showPage(currentPage);
+    }
+  } catch (e) {
+    console.error('Failed to switch group:', e);
+  }
+}
+
+async function loadPendingInvitationsBadge() {
+  try {
+    const res = await fetch('/api/groups/invitations/pending', {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const badge = document.getElementById('pending-invitations-badge');
+      if (data.invitations && data.invitations.length > 0) {
+        badge.textContent = data.invitations.length;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch (e) {}
 }
 
 async function doLogout() {
@@ -1046,8 +1156,9 @@ async function doLogout() {
 }
 
 // ─── Init ────────────────────────────────────────────────
-loadCurrentUser();
-loadDashboard();
+loadCurrentUser().then(() => {
+  loadDashboard();
+});
 </script>
 </body>
 </html>
